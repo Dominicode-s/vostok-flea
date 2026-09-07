@@ -89,6 +89,17 @@ func post_json(path: String, body: Dictionary, idempotency_key: String) -> Dicti
 	return await _send("POST", path, JSON.stringify(payload), idempotency_key)
 
 
+## DELETE, and any other verb that carries no body.
+##
+## Cancelling a listing is the only current caller. It is mutating but has no
+## ordering hazard: nothing is destroyed client-side, the server unwinds its own
+## escrow and schedules the item back as an ordinary delivery. So it takes an
+## idempotency key like any mutating call, but needs no PendingLedger entry --
+## there is no window in which a crash could lose anything.
+func request_json(method: String, path: String, query: Dictionary = {}) -> Dictionary:
+	return await _send(method, path + _build_query(query), "", "")
+
+
 ## Fresh RFC-4122 v4 UUID for use as an idempotency key.
 func new_idempotency_key() -> String:
 	var b: PackedByteArray
