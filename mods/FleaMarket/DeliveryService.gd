@@ -35,11 +35,9 @@ extends RefCounted
 const ItemBridge := preload("res://mods/FleaMarket/ItemBridge.gd")
 const PendingLedger := preload("res://mods/FleaMarket/PendingLedger.gd")
 const Stash := preload("res://mods/FleaMarket/Stash.gd")
+const Fixtures := preload("res://mods/FleaMarket/Fixtures.gd")
 
 const LOG_PREFIX := "[FleaMarket/delivery] "
-
-## The crate's scene root, as named in CourierCrate_F.tscn.
-const CRATE_NODE := "CourierCrate_F"
 
 ## Grid.cellSize. Stored grid positions are in PIXELS, not cells: GridSave
 ## records `item.position`, which Place() has already set to
@@ -128,8 +126,7 @@ static func find_crate(tree: SceneTree) -> Node:
 	var map := tree.root.get_node_or_null("Map")
 	if map == null:
 		return null
-	var found := map.find_children(CRATE_NODE + "*", "", true, false)
-	return found[0] if not found.is_empty() else null
+	return Fixtures.find_placed(map, Fixtures.CRATE)
 
 
 ## Free capacity, as {free, total} cells. Used to warn before a sale that the

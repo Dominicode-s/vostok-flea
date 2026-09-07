@@ -5,7 +5,7 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.5.3"
+const VERSION := "0.5.4"
 const LOG_PREFIX := "[FleaMarket] "
 
 const Fixtures := preload("res://mods/FleaMarket/Fixtures.gd")
@@ -235,8 +235,10 @@ func _fixture_presence(map: Node, spec: Dictionary) -> int:
 	if grid == null or not is_instance_valid(grid):
 		return PRESENCE_UNKNOWN
 
-	var scene_name: String = str(spec["scene_path"]).get_file().get_basename()
-	if not map.find_children(scene_name + "*", "", true, false).is_empty():
+	# By identity, never by node name -- see Fixtures.find_placed. Matching on
+	# the name reported a placed fixture as absent after any reload, which made
+	# this hand out duplicates.
+	if Fixtures.find_placed(map, spec) != null:
 		return PRESENCE_YES
 
 	for child in grid.get_children():

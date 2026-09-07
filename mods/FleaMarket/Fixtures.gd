@@ -85,6 +85,33 @@ static func obj_path(spec: Dictionary) -> String:
 	return "%s/%s.obj" % [MODEL_DIR, spec["model"]]
 
 
+## Find a placed fixture in the shelter, by identity rather than node name.
+##
+## Node names CANNOT be used. Loader.gd restores saved furniture with
+##
+##     furniture.name = furnitureSave.name
+##
+## so a freshly-placed crate is named after its scene root ("CourierCrate_F")
+## while the same crate loaded from a save is named after its display name
+## ("Courier Crate"). Matching on the name therefore worked immediately after
+## placing and silently stopped working on the next reload -- which read as
+## "you have no courier crate placed" while one was standing right there, and
+## worse, made the presence check hand out duplicates.
+##
+## Every placed fixture carries a `Furniture` child whose `itemData.file` is the
+## item key. That is the identity the game itself keys on, and it survives
+## renaming, reloading and the player moving things about.
+static func find_placed(map: Node, spec: Dictionary) -> Node:
+	if map == null:
+		return null
+	for node in map.find_children("Furniture", "", true, false):
+		if not "itemData" in node or node.itemData == null:
+			continue
+		if str(node.itemData.file) == str(spec["key"]):
+			return node.get_parent()
+	return null
+
+
 # --- Build ---
 
 ## Build every generated asset for one fixture. Returns true when its ItemData
