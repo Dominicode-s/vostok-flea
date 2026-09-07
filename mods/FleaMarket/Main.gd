@@ -5,10 +5,10 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.3.2"
+const VERSION := "0.4.0"
 const LOG_PREFIX := "[FleaMarket] "
 
-const TerminalAssets := preload("res://mods/FleaMarket/TerminalAssets.gd")
+const Fixtures := preload("res://mods/FleaMarket/Fixtures.gd")
 const MarketClientScript := preload("res://mods/FleaMarket/MarketClient.gd")
 const CatalogScript := preload("res://mods/FleaMarket/Catalog.gd")
 const TerminalUIScript := preload("res://mods/FleaMarket/ui/TerminalUI.gd")
@@ -85,31 +85,34 @@ func _register_furniture() -> void:
 		_log("RTVModLib unavailable - terminal cannot be registered as furniture")
 		return
 
-	# The generated ItemData must be on disk before the world scene is loaded:
-	# FleaTerminal_F.tscn references it by its user:// path.
-	if not TerminalAssets.build():
-		_log("terminal assets failed to build; skipping furniture registration")
-		return
+	# The generated ItemData and mesh must be on disk before the placed scenes
+	# are loaded: each _F.tscn references them by their user:// paths.
+	for spec in Fixtures.ALL:
+		if not Fixtures.build(spec):
+			_log("%s assets failed to build; skipping furniture registration"
+				% spec["key"])
+			return
 
 	# Registration has to happen in _ready(), before the shelter systems copy
 	# from the shared stores. Hooks and registry may not be up yet, so wait.
 	if lib.has_signal("frameworks_ready"):
 		await lib.frameworks_ready
 
-	var result: Dictionary = lib.register_furniture({
-		TerminalAssets.ITEM_KEY: {
-			"item_path": TerminalAssets.ITEM_PATH,
-			"scene_path": TerminalAssets.SCENE_PATH,
-			# No trader_pools and no recipe on purpose: the terminal is the
-			# thing that lets you trade at all, so putting it behind a trader
-			# would be circular. It is granted once instead, below.
+	var entries := {}
+	for spec in Fixtures.ALL:
+		entries[spec["key"]] = {
+			"item_path": Fixtures.item_path(spec),
+			"scene_path": spec["scene_path"],
+			# No trader_pools and no recipe on purpose: these are the things
+			# that let you trade at all, so putting them behind a trader would
+			# be circular. They are granted instead, below.
 			"trader_pools": [],
-		},
-	})
+		}
 
+	var result: Dictionary = lib.register_furniture(entries)
 	_furniture_registered = bool(result.get("ok", false))
 	if _furniture_registered:
-		_log("terminal registered as furniture (item '%s')" % TerminalAssets.ITEM_KEY)
+		_log("registered %d fixture(s) as furniture" % entries.size())
 	else:
 		_log("furniture registration failed: %s" % str(result))
 
@@ -140,24 +143,32 @@ func _check_shelter() -> void:
 	if _settled_map == map.get_instance_id():
 		return
 
-	match _terminal_presence(map):
-		PRESENCE_YES:
-			_absent_ticks = 0
-			_settled_map = map.get_instance_id()
-			_mark_terminal_granted()
-		PRESENCE_UNKNOWN:
-			# Could not read the catalog grid. Say nothing rather than guess:
-			# a false "absent" grants a duplicate.
-			_absent_ticks = 0
-		PRESENCE_NO:
-			# The catalog grid populates a beat after the shelter loads, so a
-			# single empty read is not evidence of anything. Require several
-			# consecutive absent reads before acting.
-			_absent_ticks += 1
-			if _absent_ticks >= ABSENT_TICKS_BEFORE_GRANT:
+	var missing := []
+	for spec in Fixtures.ALL:
+		match _fixture_presence(map, spec):
+			PRESENCE_UNKNOWN:
+				# Could not read the catalog grid. Say nothing rather than
+				# guess: a false "absent" grants a duplicate.
 				_absent_ticks = 0
-				_settled_map = map.get_instance_id()
-				_grant_terminal(map)
+				return
+			PRESENCE_NO:
+				missing.append(spec)
+
+	if missing.is_empty():
+		_absent_ticks = 0
+		_settled_map = map.get_instance_id()
+		_mark_terminal_granted()
+		return
+
+	# The catalog grid populates a beat after the shelter loads, so a single
+	# empty read is not evidence of anything. Require several consecutive
+	# absent reads before acting.
+	_absent_ticks += 1
+	if _absent_ticks >= ABSENT_TICKS_BEFORE_GRANT:
+		_absent_ticks = 0
+		_settled_map = map.get_instance_id()
+		for spec in missing:
+			_grant_fixture(map, spec)
 
 
 ## Does the player actually have a terminal -- placed in the shelter, or
@@ -172,7 +183,7 @@ func _check_shelter() -> void:
 ##
 ## Asking the world is strictly better than remembering: it is correct after a
 ## save wipe, after a profile switch, and if the player scraps the terminal.
-func _terminal_presence(map: Node) -> int:
+func _fixture_presence(map: Node, spec: Dictionary) -> int:
 	# Catalog grid first: it is a handful of children, where the placed-terminal
 	# search walks the entire shelter.
 	var interface := map.get_node_or_null("Core/UI/Interface")
@@ -182,7 +193,8 @@ func _terminal_presence(map: Node) -> int:
 	if grid == null or not is_instance_valid(grid):
 		return PRESENCE_UNKNOWN
 
-	if not map.find_children("FleaTerminal_F*", "", true, false).is_empty():
+	var scene_name: String = str(spec["scene_path"]).get_file().get_basename()
+	if not map.find_children(scene_name + "*", "", true, false).is_empty():
 		return PRESENCE_YES
 
 	for child in grid.get_children():
@@ -190,31 +202,34 @@ func _terminal_presence(map: Node) -> int:
 			continue
 		if child.slotData.itemData == null:
 			continue
-		if str(child.slotData.itemData.file) == TerminalAssets.ITEM_KEY:
+		if str(child.slotData.itemData.file) == str(spec["key"]):
 			return PRESENCE_YES
 	return PRESENCE_NO
 
 
-## Put one terminal into the player's build catalog, once ever.
+## Put one fixture into the player's build catalog.
 ##
 ## AddToCatalog is how vanilla hands furniture to the player -- it is the same
 ## call the game makes when you pick a placed piece back up. The catalog grid is
 ## where unplaced furniture lives; from there the player positions it in decor
 ## mode and the game's own ShelterSave keeps it there.
-func _grant_terminal(map: Node) -> void:
+func _grant_fixture(map: Node, spec: Dictionary) -> void:
 	var interface := map.get_node_or_null("Core/UI/Interface")
 	if interface == null or not interface.has_method("AddToCatalog"):
 		return
 
-	var item := TerminalAssets.load_item()
+	var item := Fixtures.load_item(spec)
 	if item == null:
-		_log("cannot grant terminal: ItemData did not load")
+		_log("cannot grant %s: ItemData did not load" % spec["key"])
 		return
 
 	interface.AddToCatalog(item, null)
 	_mark_terminal_granted()
-	_log("terminal added to the build catalog - place it from the decor menu")
-	_flash("FLEA MARKET\nTerminal added to your build catalog", Color(0.4, 1.0, 0.5), 6.0)
+	_log("%s added to the build catalog - place it from the decor menu"
+		% spec["display_name"])
+	_flash("FLEA MARKET
+%s added to your build catalog" % spec["display_name"],
+		Color(0.4, 1.0, 0.5), 6.0)
 
 
 func _log_scene_state(tree: SceneTree) -> void:
