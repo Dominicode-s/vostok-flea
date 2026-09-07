@@ -154,7 +154,8 @@ func _probe_frameworks() -> void:
 		# Registry is an enum, i.e. a script constant, not a property -- the
 		# `in` operator would miss it. Ask the script's constant map instead.
 		var has_registry := false
-		var lib_script := lib.get_script()
+		# lib is a Variant, so get_script() has no static type to infer from.
+		var lib_script = lib.get_script()
 		if lib_script != null:
 			has_registry = lib_script.get_script_constant_map().has("Registry")
 		api["has_Registry_enum"] = has_registry
