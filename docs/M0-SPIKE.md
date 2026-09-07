@@ -15,6 +15,10 @@ exported build.** The single unproven assumption the whole project was gated on
 is retired, the transport design in the spec stands, and the store-and-forward
 companion fallback (§3.2) is not needed.
 
+Confirmed two ways: the JSON report below, and the spike's own panel rendering
+`HTTPS OK · ping 200` on screen in the running game — observed directly by the
+developer.
+
 One item is **not** proven and is now the blocker: the test player key is
 rejected. See §3.
 
@@ -28,7 +32,7 @@ rejected. See §3.
 | `HTTPRequest` works | **Unproven — the risk** | **PASS** | `GET /v1/ping` → `result=0` (`RESULT_SUCCESS`), `code=200`, **259 ms** |
 | HTTPS/TLS works in the exported build | Unknown | **PASS** | Scheme was `https://`. TLS handshake succeeded; response carried `Via: 1.1 Caddy` |
 | Add a new interactable scene to the safehouse | Confirmed possible | **Available, not yet exercised** | Not probed by placing an object. `RTVModLib` exposes the registry buckets it needs — see §4 |
-| Draw custom UI | Assumed | **PASS** | `PanelContainer` + `Label` parented to `/root` and confirmed in-tree |
+| Draw custom UI | Assumed | **PASS** | `PanelContainer` + `Label` parented to `/root` and confirmed in-tree. Also **visually confirmed in-game** — the panel renders on screen reading `HTTPS OK · ping 200` |
 | Write custom keys into the game save | Confirmed possible | **PASS** | `ConfigFile` round-trip: nested dict, float `0.6234`, UTF-8 string, all read back identical |
 | Survives game patches | Low breakage historically | Unchanged | Not testable in one session |
 
