@@ -1,0 +1,10 @@
+[mod]
+name="Flea Market Spike"
+id="flea-market-spike"
+version="0.1.0"
+priority=100
+
+[autoload]
+FleaSpikeMain="res://mods/FleaSpike/Main.gd"
+
+[registry]
