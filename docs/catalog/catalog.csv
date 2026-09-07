@@ -1,0 +1,292 @@
+item_key,display_name,class,subclass,stackable,max_stack,has_condition,bulk,weight,grid_cells,value,rarity,compatible,ammo,caliber,magazine_size,armor_rating,protection,capacity,script_class
+Sticks,Sticks, Misc,,False,0,False,0.9,0.3,3.0,25,0,,,,,,0,0.0,ItemData
+Ammo_12x70,12/70,Ammo,,True,300,False,0.3,0.3,1.0,200,0,,,,,,0,0.0,ItemData
+Ammo_223,.223,Ammo,,True,300,False,0.5,0.5,1.0,300,0,,,,,,0,0.0,ItemData
+Ammo_308,.308,Ammo,,True,300,False,0.6,0.6,1.0,400,1,,,,,,0,0.0,ItemData
+Ammo_45ACP,.45,Ammo,,True,300,False,0.5,0.5,1.0,250,0,,,,,,0,0.0,ItemData
+Ammo_46x30,4.6,Ammo,,True,300,False,0.5,0.5,1.0,400,1,,,,,,0,0.0,ItemData
+Ammo_545x39,5.45,Ammo,,True,300,False,0.4,0.4,1.0,325,0,,,,,,0,0.0,ItemData
+Ammo_762x39,7.62,Ammo,,True,300,False,0.6,0.6,1.0,350,0,,,,,,0,0.0,ItemData
+Ammo_762x54R,7.62R,Ammo,,True,300,False,0.6,0.6,1.0,375,0,,,,,,0,0.0,ItemData
+Ammo_9x18,9x18,Ammo,,True,300,False,0.3,0.3,1.0,200,0,,,,,,0,0.0,ItemData
+Ammo_9x19,9x19,Ammo,,True,300,False,0.4,0.4,1.0,250,0,,,,,,0,0.0,ItemData
+Ammo_9x39,9x39,Ammo,,True,300,False,0.3,0.3,1.0,400,1,,,,,,0,0.0,ItemData
+Armor_Plate_II,Armor,Armor,,False,0,True,6.0,1.5,4.0,200,1,,,,,II,1,0.0,ItemData
+Armor_Plate_III,Armor,Armor,,False,0,True,10.0,2.5,4.0,300,1,,,,,III,3,0.0,ItemData
+Armor_Plate_IIIA,Armor,Armor,,False,0,True,8.0,2.0,4.0,250,1,,,,,IIIA,2,0.0,ItemData
+Armor_Plate_III_Plus,Armor,Armor,,False,0,True,12.0,3.0,4.0,400,1,,,,,III+,4,0.0,ItemData
+Armor_Plate_IV,Armor,Armor,,False,0,True,16.0,4.0,4.0,500,1,,,,,IV,5,0.0,ItemData
+ACOG,ATOG,Attachment,Optic,False,0,False,1.2,0.6,2.0,950,1,,,,,,0,0.0,AttachmentData
+AKM_Magazine,Mag.,Attachment,Magazine,False,30,False,0.6,0.3,2.0,110,0,Ammo_762x39,,,,,0,0.0,ItemData
+AKS_74U_Magazine,Mag.,Attachment,Magazine,False,30,False,0.4,0.2,2.0,100,0,Ammo_545x39,,,,,0,0.0,ItemData
+AK_12_Magazine,Mag.,Attachment,Magazine,False,30,False,0.4,0.2,2.0,120,0,Ammo_545x39,,,,,0,0.0,ItemData
+ANPEQ,AN-15,Attachment,Laser,False,0,False,0.2,0.2,1.0,2250,1,,,,,,0,0.0,AttachmentData
+Colt_1911_Magazine,Mag.,Attachment,Magazine,False,8,False,0.1,0.1,1.0,75,0,Ammo_45ACP,,,,,0,0.0,ItemData
+EXPS,EXP,Attachment,Optic,False,0,False,0.5,0.5,1.0,850,1,,,,,,0,0.0,AttachmentData
+Glock_17_Magazine,Mag.,Attachment,Magazine,False,17,False,0.1,0.1,1.0,90,0,Ammo_9x19,,,,,0,0.0,ItemData
+HMR,HMR,Attachment,Optic,False,0,False,1.2,0.6,2.0,1250,1,,,,,,0,0.0,AttachmentData
+Hybrid,Hybrid,Attachment,Muzzle,False,0,False,1.0,0.5,2.0,750,1,,,,,,0,0.0,AttachmentData
+KAR_21_223_Magazine,Mag.,Attachment,Magazine,False,30,False,0.4,0.2,2.0,150,1,Ammo_223,,,,,0,0.0,ItemData
+KAR_21_308_Magazine,Mag.,Attachment,Magazine,False,30,False,0.4,0.2,2.0,170,1,Ammo_308,,,,,0,0.0,ItemData
+KAR_21_Barrel,Barrel,Attachment,,False,0,False,1.5,0.5,3.0,350,1,,,,,,0,0.0,AttachmentData
+KP_31_Drum,Drum,Attachment,Magazine,False,72,False,4.4,1.1,4.0,250,1,Ammo_9x19,,,,,0,0.0,ItemData
+Kobra,Kobra,Attachment,Optic,False,0,False,0.8,0.4,2.0,350,1,,,,,,0,0.0,AttachmentData
+Leopard,Leopard,Attachment,Optic,False,0,False,2.1,0.7,3.0,1750,1,,,,,,0,0.0,AttachmentData
+M78_Magazine,Mag.,Attachment,Magazine,False,20,False,0.6,0.3,2.0,450,1,Ammo_308,,,,,0,0.0,ItemData
+MP5_Magazine,Mag.,Attachment,Magazine,False,30,False,0.4,0.2,2.0,60,0,Ammo_9x19,,,,,0,0.0,ItemData
+MP7_Magazine,Mag.,Attachment,Magazine,False,40,False,0.1,,2.0,170,1,Ammo_46x30,,,,,0,0.0,ItemData
+MRO,RMO,Attachment,Optic,False,0,False,0.3,0.3,1.0,740,1,,,,,,0,0.0,AttachmentData
+Makarov_Magazine,Mag.,Attachment,Magazine,False,8,False,0.1,0.1,1.0,25,0,Ammo_9x18,,,,,0,0.0,ItemData
+Micro,Micro,Attachment,Optic,False,0,False,0.2,0.2,1.0,450,1,,,,,,0,0.0,AttachmentData
+Monster,Monster,Attachment,Muzzle,False,0,False,1.0,0.5,2.0,820,1,,,,,,0,0.0,AttachmentData
+Navy,Navy,Attachment,Muzzle,False,0,False,0.8,0.4,2.0,880,1,,,,,,0,0.0,AttachmentData
+OZ5,OZ5,Attachment,Laser,False,0,False,0.4,0.2,2.0,1250,1,,,,,,0,0.0,AttachmentData
+P320_Magazine,Mag.,Attachment,Magazine,False,15,False,0.1,0.1,1.0,110,1,Ammo_9x19,,,,,0,0.0,ItemData
+PBS,PBS,Attachment,Muzzle,False,0,False,1.2,0.6,2.0,330,1,,,,,,0,0.0,AttachmentData
+POSP,POSP,Attachment,Optic,False,0,False,1.2,0.6,2.0,650,1,,,,,,0,0.0,AttachmentData
+PRO,PRO,Attachment,Optic,False,0,False,1.0,0.5,2.0,650,1,,,,,,0,0.0,AttachmentData
+PTN,PTN,Attachment,Muzzle,False,0,False,1.2,0.6,2.0,300,1,,,,,,0,0.0,AttachmentData
+PU,PU Scope,Attachment,Optic,False,0,False,1.2,0.6,2.0,400,1,,,,,,0,0.0,AttachmentData
+RK_Magazine,Mag.,Attachment,Magazine,False,30,False,0.4,0.2,2.0,120,0,Ammo_762x39,,,,,0,0.0,ItemData
+RMR,MRM,Attachment,Optic,False,0,False,0.1,0.1,1.0,820,1,,,,,,0,0.0,AttachmentData
+Rider,Rider,Attachment,Muzzle,False,0,False,0.4,0.2,2.0,800,1,,,,,,0,0.0,AttachmentData
+SOCOM,SOCOM,Attachment,Muzzle,False,0,False,1.0,0.5,2.0,810,1,,,,,,0,0.0,AttachmentData
+SRO,RSO,Attachment,Optic,False,0,False,0.1,0.1,1.0,840,1,,,,,,0,0.0,AttachmentData
+STANAG_Magazine,Mag.,Attachment,Magazine,False,30,False,0.4,0.2,2.0,125,0,Ammo_223,,,,,0,0.0,ItemData
+SVD_Magazine,Mag.,Attachment,Magazine,False,10,False,0.05,,1.0,150,1,Ammo_762x54R,,,,,0,0.0,ItemData
+Salvo,SLV,Attachment,Muzzle,False,0,False,2.7,0.9,3.0,950,1,,,,,,0,0.0,AttachmentData
+Thor,Thor,Attachment,Muzzle,False,0,False,1.4,0.7,2.0,990,1,,,,,,0,0.0,AttachmentData
+VSS_Magazine,Mag.,Attachment,Magazine,False,20,False,0.2,0.2,1.0,150,1,Ammo_9x39,,,,,0,0.0,ItemData
+Vudu,VDU,Attachment,Optic,False,0,False,1.8,0.6,3.0,1820,1,,,,,,0,0.0,AttachmentData
+Backpack_Jaeger_Black,Jääkäri BP.,Backpack,,False,0,False,27.0,1.8,15.0,250,1,,,,,,0,30.0,ItemData
+Backpack_Jaeger_Brown,Jääkäri BP.,Backpack,,False,0,False,27.0,1.8,15.0,250,1,,,,,,0,30.0,ItemData
+Backpack_Jaeger_Green,Jääkäri BP.,Backpack,,False,0,False,27.0,1.8,15.0,250,1,,,,,,0,30.0,ItemData
+Backpack_Jaeger_M05,Jääkäri BP.,Backpack,,False,0,False,27.0,1.8,15.0,250,1,,,,,,0,30.0,ItemData
+Backpack_Nomad,Nomad BP.,Backpack,,False,0,False,14.4,1.2,12.0,100,0,,,,,,0,15.0,ItemData
+Backpack_Patrol,Patrol BP.,Backpack,,False,0,False,18.0,1.5,12.0,200,1,,,,,,0,20.0,ItemData
+Duffel_Retro,R. Duffel,Backpack,,False,0,False,4.0,0.5,8.0,75,0,,,,,,0,20.0,ItemData
+Kukkaro_Black,Kukkaro,Belt Pouch,,False,0,False,0.4,0.2,2.0,70,0,,,,,,0,2.0,ItemData
+Kukkaro_Brown,Kukkaro,Belt Pouch,,False,0,False,0.4,0.2,2.0,70,0,,,,,,0,2.0,ItemData
+Kukkaro_Green,Kukkaro,Belt Pouch,,False,0,False,0.4,0.2,2.0,70,0,,,,,,0,2.0,ItemData
+Kukkaro_M05,Kukkaro,Belt Pouch,,False,0,False,0.4,0.2,2.0,70,0,,,,,,0,2.0,ItemData
+Beanie_Flame,F. Beanie,Clothing,,False,0,False,0.4,0.1,4.0,1500,3,,,,,,0,0.0,ItemData
+Boots_Combat,C. Boots,Clothing,,False,0,False,4.8,1.2,4.0,160,0,,,,,,0,0.0,ItemData
+Cap_M62,M62 Cap,Clothing,,False,0,False,0.4,0.1,4.0,75,0,,,,,,0,0.0,ItemData
+Fleece_Tactical_Brown,T. Fleece,Clothing,,False,0,False,3.2,0.8,4.0,80,0,,,,,,0,5.0,ItemData
+Fleece_Tactical_Green,T. Fleece,Clothing,,False,0,False,3.2,0.8,4.0,80,0,,,,,,0,5.0,ItemData
+Gloves_Leather,L. Gloves,Clothing,,False,0,False,0.1,0.1,1.0,25,0,,,,,,0,0.0,ItemData
+Gloves_Work,W. Gloves,Clothing,,False,0,False,0.1,0.1,1.0,15,0,,,,,,0,0.0,ItemData
+Hat_Mosquito,M. Hat,Clothing,,False,0,False,0.4,0.1,4.0,20,0,,,,,,0,0.0,ItemData
+Hat_Sauna,S. Hat,Clothing,,False,0,False,1.2,0.3,4.0,450,2,,,,,,0,0.0,ItemData
+Hoodie_Border_Zone,Hoodie B.,Clothing,,False,0,False,1.6,0.4,4.0,580,2,,,,,,0,5.0,ItemData
+Hoodie_Gray,Hoodie,Clothing,,False,0,False,1.6,0.4,4.0,25,0,,,,,,0,5.0,ItemData
+Jacket_M62,M62 J.,Clothing,,False,0,False,3.2,0.8,4.0,125,0,,,,,,0,5.0,ItemData
+Jacket_Santa,Santa J.,Clothing,,False,0,False,1.6,0.4,4.0,500,2,,,,,,0,5.0,ItemData
+Jacket_Winter_Blue,Winter J.,Clothing,,False,0,False,2.4,0.6,4.0,40,0,,,,,,0,5.0,ItemData
+Jacket_Winter_Red,Winter J.,Clothing,,False,0,False,2.4,0.6,4.0,40,0,,,,,,0,5.0,ItemData
+Jeans_Black,Jeans,Clothing,,False,0,False,1.2,0.6,2.0,30,0,,,,,,0,2.0,ItemData
+Pants_Hiking,Hiking P.,Clothing,,False,0,False,0.6,0.3,2.0,40,0,,,,,,0,3.0,ItemData
+Windbreaker_Black,Windbr.,Clothing,,False,0,False,0.8,0.2,4.0,35,0,,,,,,0,5.0,ItemData
+Windbreaker_Green,Windbr.,Clothing,,False,0,False,0.8,0.2,4.0,35,0,,,,,,0,5.0,ItemData
+Energy_Drink,E. Drink,Consumable,,False,0,False,1.0,0.5,2.0,400,3,,,,,,0,0.0,ItemData
+Water_Bottle,Water,Consumable,,False,0,False,1.0,0.5,2.0,300,1,,,,,,0,0.0,ItemData
+Beer,Beer,Consumables,,False,0,False,0.3,0.3,1.0,250,1,,,,,,0,0.0,ItemData
+Can_Empty,Can,Consumables,,False,0,False,0.1,0.1,1.0,5,0,,,,,,0,0.0,ItemData
+Canned_Meat,Meat,Consumables,,False,0,False,0.4,0.4,1.0,150,0,,,,,,0,0.0,ItemData
+Canned_Meatballs,Meatballs,Consumables,,False,0,False,0.5,0.5,1.0,100,0,,,,,,0,0.0,ItemData
+Canned_Pea_Soup,Pea Soup,Consumables,,False,0,False,0.5,0.5,1.0,100,0,,,,,,0,0.0,ItemData
+Canned_Peaches,Peaches,Consumables,,False,0,False,0.5,0.5,1.0,120,0,,,,,,0,0.0,ItemData
+Canned_Pear,Pear,Consumables,,False,0,False,0.5,0.5,1.0,120,0,,,,,,0,0.0,ItemData
+Canned_Peas,Peas,Consumables,,False,0,False,0.5,0.5,1.0,80,0,,,,,,0,0.0,ItemData
+Canned_Pineapple,Pineapple,Consumables,,False,0,False,0.5,0.5,1.0,120,0,,,,,,0,0.0,ItemData
+Canned_Tomatoes,Tomatoes,Consumables,,False,0,False,0.5,0.5,1.0,80,0,,,,,,0,0.0,ItemData
+Canned_Tuna,Tuna,Consumables,,False,0,False,0.3,0.3,1.0,60,0,,,,,,0,0.0,ItemData
+Cat_Food,Cat Food,Consumables,,False,0,False,0.1,0.1,1.0,50,0,,,,,,0,0.0,ItemData
+Chocolate_War,W. Choco,Consumables,,False,0,False,0.1,0.1,1.0,350,1,,,,,,0,0.0,ItemData
+Cigarettes,Cigs,Consumables,,False,0,False,0.1,0.1,1.0,125,1,,,,,,0,0.0,ItemData
+Cigars,Cigars,Consumables,,False,0,False,1.6,0.4,4.0,450,1,,,,,,0,0.0,ItemData
+Coffee,Coffee,Consumables,,False,0,False,1.0,0.5,2.0,175,1,,,,,,0,0.0,ItemData
+Coffee_Brewed,C. Brewed,Consumables,,False,0,False,3.2,0.8,4.0,500,3,,,,,,0,0.0,ItemData
+Cooked_Fish_Soup,F. Soup,Consumables,,False,0,False,3.2,0.8,4.0,500,3,,,,,,0,0.0,ItemData
+Cooked_Meatballs,M. Balls,Consumables,,False,0,False,3.2,0.8,4.0,500,3,,,,,,0,0.0,ItemData
+Cooked_Pea_Soup,P. Soup,Consumables,,False,0,False,3.2,0.8,4.0,500,3,,,,,,0,0.0,ItemData
+Cooked_Tomato_Soup,T. Soup,Consumables,,False,0,False,3.2,0.8,4.0,500,3,,,,,,0,0.0,ItemData
+Crackers,Crackers,Consumables,,False,0,False,0.4,0.2,2.0,50,0,,,,,,0,0.0,ItemData
+Energy_Powder,E. Powder,Consumables,,False,0,False,0.1,0.1,1.0,100,1,,,,,,0,0.0,ItemData
+Field_Ration,F. Ration,Consumables,,False,0,False,4.8,1.2,4.0,475,1,,,,,,0,0.0,ItemData
+Juice_Orange,Juice O.,Consumables,,False,0,False,0.2,0.2,1.0,50,0,,,,,,0,0.0,ItemData
+Juice_Pear,Juice P.,Consumables,,False,0,False,0.2,0.2,1.0,50,0,,,,,,0,0.0,ItemData
+Juice_Raspberry,Juice R.,Consumables,,False,0,False,0.2,0.2,1.0,50,0,,,,,,0,0.0,ItemData
+Kilju,Kilju,Consumables,,False,0,False,22.5,2.5,9.0,1000,3,,,,,,0,0.0,ItemData
+Kompot,Kompot,Consumables,,False,0,False,3.2,0.8,4.0,500,3,,,,,,0,0.0,ItemData
+Mustard,Mustard,Consumables,,False,0,False,0.4,0.2,2.0,75,1,,,,,,0,0.0,ItemData
+Peanuts,Peanuts,Consumables,,False,0,False,0.1,0.1,1.0,40,0,,,,,,0,0.0,ItemData
+Potato,Potato,Consumables,,False,0,False,0.2,0.2,1.0,10,0,,,,,,0,0.0,ItemData
+Salty_Liquorice,Salty Liq.,Consumables,,False,0,False,0.1,0.1,1.0,75,1,,,,,,0,0.0,ItemData
+Snus,Snus,Consumables,,False,0,False,0.1,0.1,1.0,125,1,,,,,,0,0.0,ItemData
+Soda_Lemon,Soda L.,Consumables,,False,0,False,0.3,0.3,1.0,100,1,,,,,,0,0.0,ItemData
+Sugar,Sugar,Consumables,,False,0,False,0.1,,2.0,120,0,,,,,,0,0.0,ItemData
+Yeast,Yeast,Consumables,,False,0,False,0.1,0.1,1.0,25,0,,,,,,0,0.0,ItemData
+Alarm_Clock,A. Clock,Electronics,,False,0,False,0.1,0.1,1.0,150,0,,,,,,0,0.0,ItemData
+Batteries,Batteries,Electronics,,False,0,False,0.1,0.1,1.0,100,1,,,,,,0,0.0,ItemData
+Battery,Battery,Electronics,,False,0,False,48.0,12.0,4.0,250,1,,,,,,0,0.0,ItemData
+Battery_Cables,B. Cables,Electronics,,False,0,False,0.1,0.1,1.0,50,0,,,,,,0,0.0,ItemData
+Casette_Electrofolk,Casette,Electronics,Casette,False,0,False,0.1,0.1,1.0,150,1,,,,,,0,0.0,CasetteData
+Casette_Nomad,Casette,Electronics,Casette,False,0,False,0.1,0.1,1.0,150,1,,,,,,0,0.0,CasetteData
+Casette_OST,Casette,Electronics,Casette,False,0,False,0.1,0.1,1.0,150,1,,,,,,0,0.0,CasetteData
+Casette_Player,C. Player,Electronics,,False,0,True,0.2,0.2,1.0,250,2,Batteries|Casette_Electrofolk|Casette_Symphony|Casette_OST|Casette_Radio,,,,,0,0.0,ItemData
+Casette_Radio,Casette,Electronics,Casette,False,0,False,0.1,0.1,1.0,150,1,,,,,,0,0.0,CasetteData
+Casette_Symphony,Casette (Symphony),Electronics,Casette,False,0,False,0.1,0.1,1.0,150,1,,,,,,0,0.0,CasetteData
+Coffeemaster,C. Master,Electronics,,False,0,False,22.5,2.5,9.0,2250,2,,,,,,0,0.0,ItemData
+Cooking_Station,C. Station,Electronics,,False,0,False,135.0,15.0,9.0,450,3,,,,,,0,0.0,ItemData
+Hotplate,Hotplate,Electronics,,False,0,False,13.2,2.2,6.0,250,0,,,,,,0,0.0,ItemData
+Inverter,Inverter,Electronics,,False,0,False,2.4,1.2,2.0,220,1,,,,,,0,0.0,ItemData
+Narva,Narva,Electronics,Light,False,0,True,0.2,0.2,1.0,180,0,Batteries,,,,,0,0.0,ItemData
+PV7,PV7,Electronics,NVG,False,0,True,4.8,1.2,4.0,2750,2,Batteries,,,,,0,0.0,ItemData
+Polaris,Polaris,Electronics,Light,False,0,True,0.1,0.1,1.0,375,1,Batteries,,,,,0,0.0,ItemData
+Bream,Bream,Fish,,False,0,False,21.0,3.5,6.0,120,3,,,,,,0,0.0,ItemData
+Perch,Perch,Fish,,False,0,False,1.6,0.8,2.0,150,3,,,,,,0,0.0,ItemData
+Pike,Pike,Fish,,False,0,False,50.0,5.0,10.0,250,3,,,,,,0,0.0,ItemData
+Roach,Roach,Fish,,False,0,False,0.3,0.3,1.0,50,3,,,,,,0,0.0,ItemData
+Fishing_Rod,F. Rod,Fishing,,False,0,False,3.6,0.6,6.0,480,1,,,,,,0,0.0,FishingData
+Bed_Civilian,Bed C.,Furniture,,False,0,False,1.2,,24.0,2750,4,,,,,,0,0.0,ItemData
+Bed_Nomad,Bed N.,Furniture,,False,0,False,0.7,,14.0,350,4,,,,,,0,0.0,ItemData
+Cabinet_Medical,Cabinet M.,Furniture,,False,0,False,0.2,,4.0,350,4,,,,,,0,0.0,ItemData
+Cabinet_Office,Cabinet. 0,Furniture,,False,0,False,0.2,,4.0,420,4,,,,,,0,0.0,ItemData
+Cabinet_Wood,Cabinet W.,Furniture,,False,0,False,0.45,,9.0,470,4,,,,,,0,0.0,ItemData
+Carpet_Persian,Carpet P.,Furniture,,False,0,False,0.2,,4.0,250,4,,,,,,0,0.0,ItemData
+Carpet_Rag,Carpet R.,Furniture,,False,0,False,0.2,,4.0,150,4,,,,,,0,0.0,ItemData
+Chair_Office,Chair O.,Furniture,,False,0,False,0.3,,6.0,220,4,,,,,,0,0.0,ItemData
+Chair_School,Chair S.,Furniture,,False,0,False,0.3,,6.0,250,4,,,,,,0,0.0,ItemData
+Chair_Sun,S. Chair,Furniture,,False,0,False,0.6,,12.0,,0,,,,,,0,0.0,ItemData
+Crate_Military,Crate M.,Furniture,,False,0,False,0.3,,6.0,1200,4,,,,,,0,0.0,ItemData
+Crate_Special,Crate S.,Furniture,,False,0,False,0.8,,16.0,3500,4,,,,,,0,0.0,ItemData
+Cupboard,C. Board,Furniture,,False,0,False,0.3,,6.0,275,4,,,,,,0,0.0,ItemData
+Curtain_Long,Curtain L.,Furniture,,False,0,False,0.4,,8.0,120,4,,,,,,0,0.0,ItemData
+Curtain_Mini,Curtain M.,Furniture,,False,0,False,0.25,,5.0,35,4,,,,,,0,0.0,ItemData
+Dartboard,D. Board,Furniture,,False,0,False,0.6,,12.0,350,4,,,,,,0,0.0,ItemData
+Freezer,Freezer,Furniture,,False,0,False,1.0,,20.0,950,4,,,,,,0,0.0,ItemData
+Fridge,Fridge,Furniture,,False,0,False,0.3,,6.0,475,4,,,,,,0,0.0,ItemData
+Locker,Locker,Furniture,,False,0,False,1.4,,28.0,1850,4,,,,,,0,0.0,ItemData
+Nightstand,N. Stand,Furniture,,False,0,False,0.2,,4.0,350,4,,,,,,0,0.0,ItemData
+Painting_Lake,Painting L.,Furniture,,False,0,False,0.3,,6.0,180,4,,,,,,0,0.0,ItemData
+Pallet,Pallet,Furniture,,False,0,False,0.4,,8.0,50,4,,,,,,0,0.0,ItemData
+Poster_Posture,Poster P.,Furniture,,False,0,False,0.2,,4.0,100,4,,,,,,0,0.0,ItemData
+Rack_Coat,Rack C.,Furniture,,False,0,False,0.1,,2.0,50,4,,,,,,0,0.0,ItemData
+Rya_Maria,Rya M.,Furniture,,False,0,False,0.3,,6.0,250,4,,,,,,0,0.0,ItemData
+Shelf_Metal,Shelf M.,Furniture,,False,0,False,1.4,,28.0,520,4,,,,,,0,0.0,ItemData
+Shelf_Wall,Shelf W.,Furniture,,False,0,False,0.15,,3.0,65,4,,,,,,0,0.0,ItemData
+Shelf_Wood,Shelf W.,Furniture,,False,0,False,1.4,,28.0,320,4,,,,,,0,0.0,ItemData
+Sign_Border_Zone,Sign BZ.,Furniture,,False,0,False,0.3,,6.0,2500,4,,,,,,0,0.0,ItemData
+Sofa_Leather,Sofa L.,Furniture,,False,0,False,1.4,,28.0,2400,4,,,,,,0,0.0,ItemData
+Stool_Military,Stool M.,Furniture,,False,0,False,0.2,,4.0,190,4,,,,,,0,0.0,ItemData
+Stool_Padded,Stool P.,Furniture,,False,0,False,0.2,,4.0,120,4,,,,,,0,0.0,ItemData
+Stove,Stove,Furniture,,False,0,False,0.45,,9.0,2250,4,,,,,,0,0.0,ItemData
+Table_Cabin,Table C.,Furniture,,False,0,False,1.6,,32.0,870,4,,,,,,0,0.0,ItemData
+Table_Canteen,Table (Canteen),Furniture,,False,0,False,1.05,,21.0,380,4,,,,,,0,0.0,ItemData
+Table_Kitchen,Table K.,Furniture,,False,0,False,0.8,,16.0,320,4,,,,,,0,0.0,ItemData
+Table_Office,Table. O,Furniture,,False,0,False,0.9,,18.0,380,4,,,,,,0,0.0,ItemData
+Target_Stand,Target S.,Furniture,,False,0,False,1.2,,24.0,1500,4,,,,,,0,0.0,ItemData
+Television,TV,Furniture,,False,0,False,0.2,,4.0,1700,4,,,,,,0,0.0,ItemData
+Trolley_Short,Trolley S.,Furniture,,False,0,False,0.6,,12.0,380,4,,,,,,0,0.0,ItemData
+Trolley_Tall,Trolley T.,Furniture,,False,0,False,0.9,,18.0,580,4,,,,,,0,0.0,ItemData
+Weapon_Display,Weapon D.,Furniture,,False,0,False,3.2,,64.0,5000,4,,,,,,0,0.0,ItemData
+F1,F1,Grenade,,False,0,False,0.6,0.6,1.0,350,1,,,,,,0,0.0,GrenadeData
+M43,M43,Grenade,,False,0,False,0.5,0.5,1.0,450,1,,,,,,0,0.0,GrenadeData
+M50,M50,Grenade,,False,0,False,0.4,0.4,1.0,500,1,,,,,,0,0.0,GrenadeData
+RGD_5,RGD-5,Grenade,,False,0,False,0.4,0.4,1.0,350,1,,,,,,0,0.0,GrenadeData
+Helmet_Police,P. Helmet,Helmet,,False,0,True,6.0,1.5,4.0,480,1,,,,,IIIA,2,0.0,ItemData
+SSh_39,SSh-39,Helmet,,False,0,True,4.8,1.2,4.0,240,0,,,,,II,1,0.0,ItemData
+Guitar,Guitar,Instrument,,False,0,False,22.0,2.2,10.0,1280,2,,,,,,0,0.0,InstrumentData
+Harmonica,Harmo.,Instrument,,False,0,False,0.8,0.4,2.0,780,2,,,,,,0,0.0,InstrumentData
+Key_Attic,Attic K.,Key,,False,0,False,0.1,0.1,1.0,500,3,,,,,,0,0.0,ItemData
+Key_Bunker,Bunker K.,Key,,False,0,False,0.1,0.1,1.0,500,3,,,,,,0,0.0,ItemData
+Key_Cellar,Cellar K.,Key,,False,0,False,0.1,0.1,1.0,250,2,,,,,,0,0.0,ItemData
+Key_Classroom,Class. K.,Key,,False,0,False,0.1,0.1,1.0,500,3,,,,,,0,0.0,ItemData
+Key_Gymnasium,Gym. K.,Key,,False,0,False,0.1,0.1,1.0,250,2,,,,,,0,0.0,ItemData
+Key_Tunnel,Tunnel K.,Key,,False,0,False,0.1,0.1,1.0,250,2,,,,,,0,0.0,ItemData
+Jaeger_140,Jaeger,Knife,,False,0,False,0.4,0.2,2.0,150,0,,,,,,0,0.0,KnifeData
+Skrama_200,Skrama,Knife,,False,0,False,0.8,0.4,2.0,250,1,,,,,,0,0.0,KnifeData
+Skrama_240,Skrama,Knife,,False,0,False,1.5,0.5,3.0,450,1,,,,,,0,0.0,KnifeData
+Book_Children,Children,Literature,,False,0,False,0.8,0.4,2.0,50,0,,,,,,0,0.0,ItemData
+Book_Cooking,Cooking,Literature,,False,0,False,0.8,0.4,2.0,50,0,,,,,,0,0.0,ItemData
+Book_Fishing,Fishing,Literature,,False,0,False,0.8,0.4,2.0,50,0,,,,,,0,0.0,ItemData
+Book_Religion,Religion,Literature,,False,0,False,0.8,0.4,2.0,50,0,,,,,,0,0.0,ItemData
+Cat,Cat,Lore,,False,0,False,0.75,,15.0,2500,3,,,,,,0,0.0,CatData
+Oil_Sample,Oil S.,Lore,,False,0,False,120.0,10.0,12.0,250,3,,,,,,0,0.0,ItemData
+Patient_Report,P. Report,Lore,,False,0,False,0.4,0.1,4.0,100,3,,,,,,0,0.0,ItemData
+AFAK,AFAK,Medical,,False,0,False,4.8,1.2,4.0,2850,2,,,,,,0,0.0,ItemData
+Antibiotics,Antibio.,Medical,,False,0,False,0.1,0.1,1.0,250,1,,,,,,0,0.0,ItemData
+Antiseptic,A. Septic,Medical,,False,0,False,0.3,0.3,1.0,250,1,,,,,,0,0.0,ItemData
+Balm,Balm,Medical,,False,0,False,0.1,0.1,1.0,85,0,,,,,,0,0.0,ItemData
+Bandage,Bandage,Medical,,False,0,False,0.1,0.1,1.0,150,0,,,,,,0,0.0,ItemData
+Bandage_Improvised,Bandage,Medical,,False,0,False,0.1,0.1,1.0,75,0,,,,,,0,0.0,ItemData
+Cold_Medicine,C. Med.,Medical,,False,0,False,0.1,0.1,1.0,75,0,,,,,,0,0.0,ItemData
+Deodorant,Deodora.,Medical,,False,0,False,0.4,0.2,2.0,75,1,,,,,,0,0.0,ItemData
+Gum,Gum,Medical,,False,0,False,0.1,0.1,1.0,40,0,,,,,,0,0.0,ItemData
+IFAK,IFAK,Medical,,False,0,False,0.5,0.5,1.0,440,1,,,,,,0,0.0,ItemData
+Lotion,Lotion,Medical,,False,0,False,0.4,0.2,2.0,75,0,,,,,,0,0.0,ItemData
+Medkit,Medkit,Medical,,False,0,False,7.2,1.2,6.0,550,1,,,,,,0,0.0,ItemData
+Melatonin,Melaton.,Medical,,False,0,False,0.1,0.1,1.0,75,0,,,,,,0,0.0,ItemData
+Painkillers,Painkill.,Medical,,False,0,False,0.1,0.1,1.0,150,0,,,,,,0,0.0,ItemData
+Saline,Saline,Medical,,False,0,False,0.3,0.3,1.0,250,1,,,,,,0,0.0,ItemData
+Splint,Splint,Medical,,False,0,False,0.2,0.1,2.0,150,0,,,,,,0,0.0,ItemData
+Splint_Improvised,Splint,Medical,,False,0,False,1.2,0.4,3.0,125,0,,,,,,0,0.0,ItemData
+Thermal_Blanket,Thermal,Medical,,False,0,False,0.8,0.2,4.0,250,1,,,,,,0,0.0,ItemData
+Tissues,Tissues,Medical,,False,0,False,0.8,0.2,4.0,50,0,,,,,,0,0.0,ItemData
+Tourniquet,Tourni.,Medical,,False,0,False,0.1,0.1,1.0,150,0,,,,,,0,0.0,ItemData
+Tourniquet_Improvised,Tourni.,Medical,,False,0,False,0.6,0.3,2.0,75,0,,,,,,0,0.0,ItemData
+Wipes,Wipes,Medical,,False,0,False,0.1,0.1,1.0,120,1,,,,,,0,0.0,ItemData
+Blanket,Blanket,Misc,,False,0,False,6.0,0.5,12.0,75,0,,,,,,0,0.0,ItemData
+Board_Game,B. Game,Misc,,False,0,False,0.8,0.2,4.0,140,1,,,,,,0,0.0,ItemData
+Bucket,Bucket,Misc,,False,0,False,2.7,0.3,9.0,25,0,,,,,,0,0.0,ItemData
+Coffee_Filter,C. Filter,Misc,,False,0,False,0.8,0.2,4.0,75,1,,,,,,0,0.0,ItemData
+Duct_Tape,D. Tape,Misc,,False,0,False,0.2,0.2,1.0,50,0,,,,,,0,0.0,ItemData
+Happy_Stove,H. Stove,Misc,,False,0,False,1.0,0.25,4.0,220,1,,,,,,0,0.0,ItemData
+Jerry_Can,Jerry C.,Misc,,False,0,True,31.5,3.5,9.0,120,1,,,,,,0,0.0,ItemData
+Lumber,Lumber,Misc,,False,0,False,320.0,20.0,16.0,150,0,,,,,,0,0.0,ItemData
+Map,Map,Misc,,False,0,False,0.8,0.2,4.0,250,1,,,,,,0,0.0,ItemData
+Map_Tactical,Map (Tactical),Misc,,False,0,False,0.4,0.2,2.0,250,1,,,,,,0,0.0,ItemData
+Matches,Mat.,Misc,Matches,True,300,False,0.1,0.1,1.0,20,0,,,,,,0,0.0,ItemData
+Mattress,Mattress,Misc,,False,0,False,94.5,4.5,21.0,110,0,,,,,,0,0.0,ItemData
+Mess_Kit,Mess Kit,Misc,,False,0,False,3.2,0.8,4.0,250,1,,,,,,0,0.0,ItemData
+Nails,Nails,Misc,,False,0,False,4.4,2.2,2.0,50,0,,,,,,0,0.0,ItemData
+Oil_Filter,O. Filter,Misc,,False,0,False,0.6,0.3,2.0,180,1,,,,,,0,0.0,ItemData
+Pillow,Pillow,Misc,,False,0,False,1.2,0.2,6.0,50,0,,,,,,0,0.0,ItemData
+Rags,Rags,Misc,,False,0,False,0.2,0.1,2.0,20,0,,,,,,0,0.0,ItemData
+Sleeping_Bag,S. Bag,Misc,,False,0,False,15.0,2.5,6.0,450,1,,,,,,0,0.0,ItemData
+Tackle_Box,Tackle B.,Misc,,False,0,False,15.0,2.5,6.0,370,1,,,,,,0,0.0,ItemData
+Toilet_Paper,T. Paper,Misc,,False,0,False,0.1,0.1,1.0,25,0,,,,,,0,0.0,ItemData
+Toolbox,Toolbox,Misc,,False,0,False,27.0,4.5,6.0,375,1,,,,,,0,0.0,ItemData
+Water_Lock,W. Lock,Misc,,False,0,False,0.1,0.1,1.0,150,2,,,,,,0,0.0,ItemData
+Weapon_Repair_Kit,Repair Kit,Misc,,False,0,False,15.0,2.5,6.0,2750,1,,,,,,0,0.0,ItemData
+K19,K19,Rig,,False,0,False,9.9,1.1,9.0,450,1,Armor_Plate_II|Armor_Plate_IIIA|Armor_Plate_III|Armor_Plate_III_Plus|Armor_Plate_IV,,,,,0,10.0,ItemData
+LVPC_Green,LVPC,Rig,,False,0,False,4.5,0.5,9.0,380,1,Armor_Plate_II|Armor_Plate_IIIA|Armor_Plate_III|Armor_Plate_III_Plus|Armor_Plate_IV,,,,,0,10.0,ItemData
+LVPC_M05,LVPC,Rig,,False,0,False,4.5,0.5,9.0,380,1,Armor_Plate_II|Armor_Plate_IIIA|Armor_Plate_III|Armor_Plate_III_Plus|Armor_Plate_IV,,,,,0,10.0,ItemData
+LVPC_Winter,LVPC,Rig,,False,0,False,4.5,0.5,9.0,380,1,Armor_Plate_II|Armor_Plate_IIIA|Armor_Plate_III|Armor_Plate_III_Plus|Armor_Plate_IV,,,,,0,10.0,ItemData
+Vest_Fishing,F. Vest,Rig,,False,0,False,9.6,0.8,12.0,140,0,,,,,,0,15.0,ItemData
+AKM,KA-M,Weapon,Rifle,False,0,True,40.8,3.4,12.0,1200,0,AKM_Magazine|ACOG|EXPS|HMR|Kobra|Leopard|Micro|MRO|PBS|PRO|PTN|Vudu,Ammo_762x39,7.62x39,30,,0,0.0,WeaponData
+AKS_74U,KAS-74U,Weapon,Rifle,False,0,True,28.0,2.8,10.0,850,0,AKS_74U_Magazine|ACOG|EXPS|HMR|Kobra|Leopard|Micro|MRO|PBS|PRO|PTN|Vudu,Ammo_545x39,5.45x39,30,,0,0.0,WeaponData
+AK_12,KA-12,Weapon,Rifle,False,0,True,42.0,3.5,12.0,2200,0,AK_12_Magazine|ACOG|EXPS|HMR|Kobra|Leopard|Micro|MRO|OZ5|PBS|PRO|PTN|Vudu|ANPEQ,Ammo_545x39,5.45x39,30,,0,0.0,WeaponData
+Colt_1911,C1911,Weapon,Pistol,False,0,True,6.6,1.1,6.0,550,0,Colt_1911_Magazine|Rider,Ammo_45ACP,.45 ACP,8,,0,0.0,WeaponData
+Glock_17,G7,Weapon,Pistol,False,0,True,3.9,0.65,6.0,700,0,Glock_17_Magazine|Rider|RMR|SRO,Ammo_9x19,9×19,17,,0,0.0,WeaponData
+HK416,K416,Weapon,Rifle,False,0,True,45.6,3.8,12.0,4950,1,STANAG_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|OZ5|PRO|SOCOM|Thor|Vudu|ANPEQ,Ammo_223,.223,30,,0,0.0,WeaponData
+KAR_21_223,KAR-21,Weapon,Rifle,False,0,True,44.4,3.7,12.0,3800,1,KAR_21_223_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|OZ5|PRO|SOCOM|Thor|Vudu|ANPEQ,Ammo_223,.223,30,,0,0.0,WeaponData
+KAR_21_308,KAR-21,Weapon,Rifle,False,0,True,45.6,3.8,12.0,4200,1,KAR_21_308_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|OZ5|PRO|SOCOM|Thor|Vudu|ANPEQ,Ammo_308,.308,30,,0,0.0,WeaponData
+KP_31,KP-31,Weapon,SMG,False,0,True,46.0,4.6,10.0,5200,2,KP_31_Drum,Ammo_9x19,9x19,70,,0,0.0,WeaponData
+M4A1,M4A1,Weapon,Rifle,False,0,True,36.0,3.0,12.0,3850,0,STANAG_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|OZ5|PRO|SOCOM|Thor|Vudu|ANPEQ,Ammo_223,.223,30,,0,0.0,WeaponData
+M78,M78,Weapon,Rifle,False,0,True,67.2,4.8,14.0,4650,2,M78_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|PRO|SOCOM|Thor|Vudu,Ammo_308,.308,20,,0,0.0,WeaponData
+MK18,KM18,Weapon,Rifle,False,0,True,33.0,2.75,12.0,3250,1,STANAG_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|OZ5|PRO|SOCOM|Thor|Vudu|ANPEQ,Ammo_223,.223,30,,0,0.0,WeaponData
+MP5,PM5,Weapon,SMG,False,0,True,20.8,2.6,8.0,2450,0,MP5_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|MRO|Navy|PRO|Vudu,Ammo_9x19,9x19,30,,0,0.0,WeaponData
+MP5K,PM5-K,Weapon,SMG,False,0,True,12.0,2.0,6.0,1850,0,MP5_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|MRO|Navy|PRO|Vudu,Ammo_9x19,9x19,30,,0,0.0,WeaponData
+MP5SD,PM5-SD,Weapon,SMG,False,0,True,28.0,2.8,10.0,3400,1,MP5_Magazine|ACOG|EXPS|HMR|Kobra|Leopard|Micro|MRO|OZ5|PRO|Vudu,Ammo_9x19,9x19,30,,0,0.0,WeaponData
+MP7,PM7,Weapon,,False,0,True,16.8,2.1,8.0,4150,1,MP7_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|MRO|OZ5|PRO|Vudu|ANPEQ,Ammo_46x30,4.6x30,40,,0,0.0,WeaponData
+Makarov,Karov,Weapon,Pistol,False,0,True,3.0,0.75,4.0,250,0,Makarov_Magazine,Ammo_9x18,9×18,8,,0,0.0,WeaponData
+Mosin,Mosin,Weapon,Bolt,False,5,True,56.0,4.0,14.0,450,0,PU,Ammo_762x54R,7.62x54R,5,,0,0.0,WeaponData
+P320,P3,Weapon,Pistol,False,0,True,4.8,0.8,6.0,1150,1,P320_Magazine|Rider|RMR|SRO,Ammo_9x19,9×19,17,,0,0.0,WeaponData
+RK_62,RK-62,Weapon,Rifle,False,0,True,45.6,3.8,12.0,2200,0,RK_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|PRO|SOCOM|Thor|Vudu,Ammo_762x39,7.62x39,30,,0,0.0,WeaponData
+RK_62M,RK-62M,Weapon,Rifle,False,0,True,45.6,3.8,12.0,4200,2,RK_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|OZ5|PRO|SOCOM|Thor|Vudu|ANPEQ,Ammo_762x39,7.62x39,30,,0,0.0,WeaponData
+RK_95,RK-95,Weapon,Rifle,False,0,True,45.6,3.8,12.0,2200,0,RK_Magazine|ACOG|EXPS|HMR|Hybrid|Kobra|Leopard|Micro|Monster|MRO|PRO|SOCOM|Thor|Vudu,Ammo_762x39,7.62x39,30,,0,0.0,WeaponData
+Remington_870,RM-870,Weapon,Shotgun,False,8,True,43.2,3.6,12.0,550,0,Salvo,Ammo_12x70,12/70,10,,0,0.0,WeaponData
+SVD,VSD,Weapon,Rifle,False,0,True,84.8,5.3,16.0,4650,1,SVD_Magazine|ACOG|EXPS|HMR|Kobra|Leopard|Micro|MRO|PBS|POSP|PRO|PTN|Vudu,Ammo_762x54R,7.62x54R,10,,0,0.0,WeaponData
+VSS,SSV,Weapon,Rifle,False,0,True,28.0,2.8,10.0,4700,2,VSS_Magazine|ACOG|EXPS|HMR|Kobra|Leopard|Micro|MRO|POSP|PRO|Vudu,Ammo_9x39,9x39,20,,0,0.0,WeaponData
