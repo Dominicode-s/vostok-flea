@@ -1,0 +1,15 @@
+# Build output
+*.vmz
+*.zip
+
+# Godot
+.godot/
+*.import
+
+# Local capability reports pulled off the game machine
+/docs/spike-results/*.local.json
+
+# OS
+Thumbs.db
+.DS_Store
+.dev-keys.json

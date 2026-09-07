@@ -1,0 +1,205 @@
+{
+  "capabilities": {
+    "bearer_auth_headers_work": {
+      "detail": "GET /catalog with Authorization: Bearer -> code=200",
+      "ok": true
+    },
+    "cash_mod_available": {
+      "detail": "Engine meta CashMain present",
+      "ok": true
+    },
+    "draw_custom_ui": {
+      "detail": "PanelContainer + Label parented to /root",
+      "ok": true
+    },
+    "gdscript_executes": {
+      "detail": "This autoload's _ready() ran and logged.",
+      "ok": true
+    },
+    "httprequest_works": {
+      "detail": "GET https://api.domfragsvostokmods.bid/v1/ping -> result=0 code=200 in 259ms",
+      "ok": true
+    },
+    "https_tls_in_exported_build": {
+      "detail": "Scheme was https://. TLS handshake succeeded.",
+      "ok": true
+    },
+    "post_with_json_body_works": {
+      "detail": "POST /listings with an intentionally invalid item_key -> code=401. Any HTTP response proves the POST path; 4xx is the expected answer.",
+      "ok": true
+    },
+    "rtvmodlib_available": {
+      "detail": "Engine meta RTVModLib present",
+      "ok": true
+    },
+    "running_in_exported_build": {
+      "detail": "has_feature(editor)=false debug_build=false exe=D:/Steam/steamapps/common/Road to Vostok/RTV.exe",
+      "ok": true
+    },
+    "save_custom_keys_roundtrip": {
+      "detail": "ConfigFile save=0 load=0 int_ok=true dict_ok=true (nested dict, float, UTF-8)",
+      "ok": true
+    }
+  },
+  "environment": {
+    "cash_mod": {
+      "cash_item": {
+        "defaultAmount": 1000,
+        "file": "Cash",
+        "maxAmount": 99999,
+        "name": "Vostok Dollars",
+        "showAmount": true,
+        "size": [
+          1.0,
+          1.0
+        ],
+        "stackable": true,
+        "value": 1,
+        "weight": 0.0
+      },
+      "has_AddCash": true,
+      "has_CountCash": true,
+      "has_RemoveCash": true,
+      "signals": {
+        "cash_dropped": true,
+        "cash_picked_up": true,
+        "cash_sold": true
+      }
+    },
+    "debug_build": false,
+    "executable": "D:/Steam/steamapps/common/Road to Vostok/RTV.exe",
+    "godot_version": {
+      "build": "official",
+      "hash": "71f334935c000924d403448e698df4441130df18",
+      "hex": 263682,
+      "major": 4,
+      "minor": 6,
+      "patch": 2,
+      "status": "stable",
+      "string": "4.6.2-stable (official)",
+      "timestamp": 0
+    },
+    "has_feature_editor": false,
+    "has_feature_template": true,
+    "os_name": "Windows",
+    "rtvmodlib": {
+      "has_Registry_enum": true,
+      "has_frameworks_ready": true,
+      "has_hook": true,
+      "has_patch": true,
+      "has_register": true,
+      "has_skip_super": true,
+      "registry_buckets_present": [
+        "ITEMS",
+        "LOOT",
+        "SCENES",
+        "SCENE_PATHS",
+        "SCENE_NODES",
+        "SHELTERS",
+        "MAPS",
+        "INPUTS",
+        "RESOURCES"
+      ]
+    },
+    "user_dir": "C:/Users/domzt/AppData/Roaming/Road to Vostok",
+    "user_dir_save_hints": [
+      "RunSummaryHistory_profile_01.cfg",
+      "RunSummaryHistory_profile_02.cfg",
+      "RunSummaryHistory_profile_03.cfg",
+      "SecureContainer_session_profile_03.json",
+      "XPData_profile_02.cfg",
+      "XPData_profile_03.cfg",
+      "profiles/"
+    ]
+  },
+  "http": {
+    "catalog": {
+      "body_bytes": 10846,
+      "catalog_version": 1.0,
+      "code": 200,
+      "elapsed_ms": 125,
+      "entry_count": 52,
+      "first_entries": [
+        {
+          "allowed_attachments": [],
+          "base_value": 95.0,
+          "broker_basket": true,
+          "bulk": 0.03,
+          "class": "ammo",
+          "display_name": "12ga Buckshot",
+          "has_condition": false,
+          "item_key": "ammo_12g_buck",
+          "max_stack": 60.0,
+          "stackable": true
+        },
+        {
+          "allowed_attachments": [],
+          "base_value": 55.0,
+          "broker_basket": true,
+          "bulk": 0.01,
+          "class": "ammo",
+          "display_name": "5.45x39mm",
+          "has_condition": false,
+          "item_key": "ammo_545x39",
+          "max_stack": 120.0,
+          "stackable": true
+        },
+        {
+          "allowed_attachments": [],
+          "base_value": 70.0,
+          "broker_basket": true,
+          "bulk": 0.012,
+          "class": "ammo",
+          "display_name": "7.62x39mm",
+          "has_condition": false,
+          "item_key": "ammo_762x39",
+          "max_stack": 120.0,
+          "stackable": true
+        }
+      ],
+      "result": 0,
+      "top_level_keys": [
+        "catalog_version",
+        "requested_game_version",
+        "descriptor_version",
+        "items"
+      ]
+    },
+    "ping": {
+      "body_bytes": 150,
+      "body_text": "{\"ok\":true,\"service\":\"vostok-market\",\"api_version\":\"v1\",\"server_time\":\"2026-09-07T20:34:20.703Z\",\"message\":\"Road to Vostok flea market. HTTPS is up.\"}",
+      "code": 200,
+      "elapsed_ms": 259,
+      "json": {
+        "api_version": "v1",
+        "message": "Road to Vostok flea market. HTTPS is up.",
+        "ok": true,
+        "server_time": "2026-09-07T20:34:20.703Z",
+        "service": "vostok-market"
+      },
+      "method": "GET",
+      "request_error": 0,
+      "response_headers": [
+        "Alt-Svc: h3=\":443\"; ma=2592000",
+        "Content-Length: 150",
+        "Content-Type: application/json; charset=utf-8",
+        "Date: Mon, 07 Sep 2026 20:34:20 GMT",
+        "Via: 1.1 Caddy",
+        "X-Ratelimit-Limit: 240",
+        "X-Ratelimit-Remaining: 239",
+        "X-Ratelimit-Reset: 60"
+      ],
+      "result": 0,
+      "url": "https://api.domfragsvostokmods.bid/v1/ping"
+    },
+    "post_probe": {
+      "body_text": "{\"error\":\"unauthorized\",\"message\":\"invalid player key\"}",
+      "code": 401,
+      "elapsed_ms": 124,
+      "result": 0
+    }
+  },
+  "probed_at_unix": 1788813260,
+  "probed_at_utc": "2026-09-07T20:34:20",
+  "spike_version": "0.1.0"
+}
