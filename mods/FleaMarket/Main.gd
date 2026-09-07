@@ -5,7 +5,7 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.3.1"
+const VERSION := "0.3.2"
 const LOG_PREFIX := "[FleaMarket] "
 
 const TerminalAssets := preload("res://mods/FleaMarket/TerminalAssets.gd")
@@ -31,6 +31,8 @@ var _furniture_registered := false
 var _last_scene_note := ""
 var _ui: Node = null
 var _absent_ticks := 0
+## Instance id of the shelter whose terminal state is already resolved.
+var _settled_map := 0
 
 ## Presence of the terminal in the player's world.
 const PRESENCE_NO := 0
@@ -127,11 +129,21 @@ func _check_shelter() -> void:
 	var map := tree.root.get_node_or_null("Map")
 	if map == null or not "mapType" in map or str(map.mapType) != "Shelter":
 		_absent_ticks = 0
+		# Leaving the shelter invalidates the settled state, so re-entering
+		# re-checks. A new game rebuilds the map, which gives a new instance id.
+		_settled_map = 0
+		return
+
+	# Settled for this shelter: stop looking. Without this the presence check
+	# walks the whole shelter tree once a second forever, which is the mistake
+	# Quick Stack shipped a fix for.
+	if _settled_map == map.get_instance_id():
 		return
 
 	match _terminal_presence(map):
 		PRESENCE_YES:
 			_absent_ticks = 0
+			_settled_map = map.get_instance_id()
 			_mark_terminal_granted()
 		PRESENCE_UNKNOWN:
 			# Could not read the catalog grid. Say nothing rather than guess:
@@ -144,6 +156,7 @@ func _check_shelter() -> void:
 			_absent_ticks += 1
 			if _absent_ticks >= ABSENT_TICKS_BEFORE_GRANT:
 				_absent_ticks = 0
+				_settled_map = map.get_instance_id()
 				_grant_terminal(map)
 
 
@@ -160,16 +173,17 @@ func _check_shelter() -> void:
 ## Asking the world is strictly better than remembering: it is correct after a
 ## save wipe, after a profile switch, and if the player scraps the terminal.
 func _terminal_presence(map: Node) -> int:
-	var placed := map.find_children("FleaTerminal_F*", "", true, false)
-	if not placed.is_empty():
-		return PRESENCE_YES
-
+	# Catalog grid first: it is a handful of children, where the placed-terminal
+	# search walks the entire shelter.
 	var interface := map.get_node_or_null("Core/UI/Interface")
 	if interface == null or not "catalogGrid" in interface:
 		return PRESENCE_UNKNOWN
 	var grid = interface.catalogGrid
 	if grid == null or not is_instance_valid(grid):
 		return PRESENCE_UNKNOWN
+
+	if not map.find_children("FleaTerminal_F*", "", true, false).is_empty():
+		return PRESENCE_YES
 
 	for child in grid.get_children():
 		if not "slotData" in child or child.slotData == null:

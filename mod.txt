@@ -1,7 +1,7 @@
 [mod]
 name="Vostok Flea Market"
 id="vostok-flea-market"
-version="0.3.1"
+version="0.3.2"
 priority=0
 
 [autoload]
