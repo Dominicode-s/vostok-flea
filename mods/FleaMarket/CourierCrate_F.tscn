@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://UI/Sprites/Icon_Object.png" id="5"]
 [ext_resource type="Material" path="res://Modular/Materials/MT_Hint.tres" id="6"]
 [ext_resource type="ArrayMesh" path="user://FleaMarket/CrateMesh.res" id="7"]
+[ext_resource type="Resource" path="res://Audio/Containers/Container_Crate_Wood.tres" id="8"]
 
 [sub_resource type="BoxShape3D" id="SH_Crate"]
 size = Vector3(0.9, 0.6, 0.6)
@@ -25,6 +26,7 @@ size = Vector2(0.6, 0.6)
 script = ExtResource("1")
 containerName = "Courier Crate"
 containerSize = Vector2(8, 6)
+audioEvent = ExtResource("8")
 locked = false
 furniture = true
 
