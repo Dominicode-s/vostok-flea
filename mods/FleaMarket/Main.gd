@@ -5,12 +5,13 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.2.0"
+const VERSION := "0.3.0"
 const LOG_PREFIX := "[FleaMarket] "
 
 const TerminalAssets := preload("res://mods/FleaMarket/TerminalAssets.gd")
 const MarketClientScript := preload("res://mods/FleaMarket/MarketClient.gd")
 const CatalogScript := preload("res://mods/FleaMarket/Catalog.gd")
+const TerminalUIScript := preload("res://mods/FleaMarket/ui/TerminalUI.gd")
 
 ## Player key lives in user:// and is global rather than per-save-profile: it
 ## identifies the player to the market, not a particular world. (PendingLedger
@@ -28,6 +29,7 @@ var _poll_timer: Timer = null
 
 var _furniture_registered := false
 var _last_scene_note := ""
+var _ui: Node = null
 
 
 func _ready() -> void:
@@ -158,15 +160,26 @@ func _log_scene_state(tree: SceneTree) -> void:
 # --- Terminal ---
 
 func open_terminal(_terminal: Node) -> void:
-	# Placeholder for the browse screen. The interaction path is what this
-	# commit proves; the UI is the next one.
+	if is_instance_valid(_ui):
+		# Already open. Interacting again must not stack a second copy on the
+		# first: closing one would leave the player frozen behind the other.
+		return
+
+	var tree := get_tree()
+	if tree == null:
+		return
+
 	_log("terminal opened")
-	var status := "offline"
-	if _client != null and _client.is_online():
-		status = "online"
-	_flash("FLEA MARKET\n%s  -  catalog v%d, %d items" % [
-		status.to_upper(), _catalog.catalog_version, _catalog.count()],
-		Color(0.4, 1.0, 0.5))
+	var ui = TerminalUIScript.new()
+	ui.setup(self, _client)
+	ui.closed.connect(_on_terminal_closed)
+	tree.root.add_child(ui)
+	_ui = ui
+
+
+func _on_terminal_closed() -> void:
+	_ui = null
+	_log("terminal closed")
 
 
 # --- Catalog ---
