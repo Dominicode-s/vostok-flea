@@ -25,26 +25,70 @@ extends RefCounted
 ##   casing     a spent casing is in the chamber
 ##   state      "", "Jammed" or "Frozen"
 ##
-## Descriptor version 2 carries all of them. Version 1 carried three, invented a
-## `durability` field the game does not have, and expected a per-attachment
-## condition that cannot exist -- see docs/FINDINGS-ITEMBRIDGE.md.
+## ## Fields are conditional, not unconditional
 ##
-## CONTRACT CAVEAT: descriptor v2's exact field names are this client's
-## proposal. The server has adopted descriptor_version 2 and condition_scale
-## {0, 100} from that proposal, but the full shape has not been confirmed
-## against API.md, and phase-1 POST /listings -- the free validator -- is
-## currently unreachable behind a 401. Treat the key names as provisional and
-## re-check them before the first real escrow.
+## The server rejects fields that do not apply to the item, so this cannot just
+## emit everything and let the server sort it out (API.md, Rejections):
+##
+##   * `condition` supplied for an item that has none          -> 422
+##   * `mode`/`zoom`/`mount_position`/`chamber`/`casing` on a
+##     non-weapon                                              -> 422
+##   * `amount` non-zero on something neither stackable nor a
+##     weapon, or `amount < 1` on a stackable                   -> 422
+##   * `storage` omitted on an item with capacity > 0           -> 422
+##
+## ## Classification comes from the game, not the catalog
+##
+## `GET /v1/catalog` does not publish `capacity` or `magazine_size`, although
+## the contract's rejection rules reference both. The game's own ItemData does
+## carry them, and the server's catalog was derived from exactly these fields,
+## so classifying locally is both possible and authoritative.
 
 const DESCRIPTOR_VERSION := 2
 
 ## Condition is 0-100 in the game and 0-100 on the wire. Stated as a constant
-## because reading it as a 0-1 fraction is a silent 100x pricing error rather
-## than a validation failure -- exactly the kind of bug that looks fine until
-## money moves.
+## because reading it as a 0-1 fraction is a silent 100x mispricing rather than
+## a validation failure -- `0.62` means 0.62%.
 const CONDITION_MIN := 0.0
 const CONDITION_MAX := 100.0
 
+const VALID_STATES := ["", "Jammed", "Frozen"]
+
+
+# --- Classification ---
+
+## Weapons carry fire mode, optic settings and a chamber. Nothing else may.
+static func is_weapon(item: ItemData) -> bool:
+	return item != null and str(item.type) == "Weapon"
+
+
+## Magazines hold rounds in `amount` exactly as weapons do, but are not weapons
+## and so carry none of the weapon-only fields.
+static func is_magazine(item: ItemData) -> bool:
+	return item != null and str(item.subtype) == "Magazine"
+
+
+## Whether `amount` means anything for this item at all.
+static func carries_amount(item: ItemData) -> bool:
+	if item == null:
+		return false
+	return bool(item.stackable) or is_weapon(item) or is_magazine(item)
+
+
+## `showCondition` is the game's own flag and is what the server's
+## `has_condition` was derived from.
+static func has_condition(item: ItemData) -> bool:
+	return item != null and bool(item.showCondition)
+
+
+## Containers are identified by capacity, not by `slots` -- `slots` turned out
+## to be equip slots (Primary, Head, Torso). This catches the 12 items of
+## clothing with pockets, not just backpacks.
+static func is_container(item: ItemData) -> bool:
+	return item != null and float(item.capacity) > 0.0
+
+
+# --- Validation ---
 
 ## Why this item cannot be listed, or "" when it can.
 ##
@@ -55,53 +99,96 @@ static func rejection_reason(slot: SlotData) -> String:
 		return "There is no item here."
 	if slot.itemData == null:
 		return "This item has no data attached to it."
-	if str(slot.itemData.file) == "":
+
+	var item: ItemData = slot.itemData
+	if str(item.file) == "":
 		return "This item has no identity key and cannot be traded safely."
 
-	# Containers are refused rather than serialised, for now.
+	# The property-loss case.
 	#
 	# `storage` holds a container's contents as a nested Array[SlotData] and it
 	# travels with the item everywhere the game moves one. Listing a full
-	# backpack would destroy the backpack AND everything inside it, while the
-	# server's record described only the backpack -- so a refund could not put
-	# the contents back. That is property loss on the happy path.
+	# backpack -- or a jacket with something in the pocket -- would destroy the
+	# contents too, while the server's record described only the container. A
+	# refund could not put back what the server never held, and the loss happens
+	# on the happy path where nobody is looking for it.
 	#
-	# Representing storage recursively is the richer fix and the descriptor has
-	# a slot for it. Refusing is the one option that cannot silently lose
-	# anything, so it is what ships first.
+	# Checked against actual contents rather than the catalog's capacity flag,
+	# because contents are the thing that can actually be lost.
 	if slot.storage != null and slot.storage.size() > 0:
-		return "Empty this container before listing it."
+		return "Empty this container before listing it. Its contents would be destroyed."
+
+	if bool(item.stackable) and int(slot.amount) < 1:
+		return "This stack is empty."
+
+	if not carries_amount(item) and int(slot.amount) != 0:
+		return "This item carries an amount the market cannot describe."
+
+	if bool(item.stackable) and slot.nested != null and slot.nested.size() > 0:
+		return "A stackable item cannot carry attachments."
+
+	if str(slot.state) not in VALID_STATES:
+		return "This item is in a state the market does not recognise ('%s')." % slot.state
+
+	var seen := {}
+	if slot.nested != null:
+		for nested in slot.nested:
+			if nested == null or str(nested.file) == "":
+				return "One of this item's attachments is missing its identity key."
+			if seen.has(str(nested.file)):
+				return "This item has the same attachment fitted twice."
+			seen[str(nested.file)] = true
 
 	return ""
 
 
+# --- Serialisation ---
+
 ## Serialise a game item to the canonical descriptor.
 ##
 ## Callers must check rejection_reason() first; this assumes a listable item.
+## Only fields that legally apply to this item are emitted -- see the note at
+## the top about conditional fields.
 static func to_descriptor(slot: SlotData) -> Dictionary:
+	var item: ItemData = slot.itemData
+
 	var attachments := []
 	if slot.nested != null:
 		for nested in slot.nested:
 			if nested != null and str(nested.file) != "":
 				attachments.append(str(nested.file))
 
-	return {
+	var desc := {
 		"descriptor_version": DESCRIPTOR_VERSION,
-		"item_key": str(slot.itemData.file),
-		"amount": int(slot.amount),
-		# Kept as a float. The casette player drains condition fractionally
-		# (condition -= delta * 0.1), so rounding here would quietly alter an
-		# item on every round-trip.
-		"condition": float(slot.condition),
+		"item_key": str(item.file),
 		"attachments": attachments,
-		"mode": int(slot.mode),
-		"zoom": int(slot.zoom),
-		"mount_position": float(slot.position),
-		"chamber": bool(slot.chamber),
-		"casing": bool(slot.casing),
 		"state": str(slot.state),
+		# Sent explicitly and always. The server refuses a container that omits
+		# it, and absent-means-empty would let a client hide a full backpack by
+		# leaving the field out.
 		"storage": [],
+		"custom": {},
 	}
+
+	# `amount` is overloaded exactly as it is in the game: stack size for a
+	# stackable, rounds loaded for a weapon or magazine, and meaningless
+	# otherwise -- where it must be 0 rather than absent.
+	desc["amount"] = int(slot.amount) if carries_amount(item) else 0
+
+	if has_condition(item):
+		# Kept as a float. The casette player drains condition fractionally
+		# (condition -= delta * 0.1), so rounding would quietly alter an item on
+		# every round-trip.
+		desc["condition"] = _clamp_condition(slot.condition)
+
+	if is_weapon(item):
+		desc["mode"] = int(slot.mode)
+		desc["zoom"] = int(slot.zoom)
+		desc["mount_position"] = float(slot.position)
+		desc["chamber"] = bool(slot.chamber)
+		desc["casing"] = bool(slot.casing)
+
+	return desc
 
 
 ## Rebuild a game item from a descriptor.
@@ -130,13 +217,16 @@ static func from_descriptor(desc: Dictionary, resolve: Callable) -> SlotData:
 	var slot := SlotData.new()
 	slot.itemData = item_data
 	slot.amount = int(desc.get("amount", 0))
+	slot.state = str(desc.get("state", ""))
+
+	# Defaults mirror SlotData's own, so a descriptor that legally omits a field
+	# rebuilds the item the game would have created.
 	slot.condition = _clamp_condition(desc.get("condition", CONDITION_MAX))
 	slot.mode = int(desc.get("mode", 1))
 	slot.zoom = int(desc.get("zoom", 1))
 	slot.position = float(desc.get("mount_position", 0.0))
 	slot.chamber = bool(desc.get("chamber", false))
 	slot.casing = bool(desc.get("casing", false))
-	slot.state = str(desc.get("state", ""))
 
 	var attachments = desc.get("attachments", [])
 	if attachments is Array:
@@ -152,17 +242,22 @@ static func from_descriptor(desc: Dictionary, resolve: Callable) -> SlotData:
 	return slot
 
 
+# --- Comparison ---
+
 ## True when two SlotData describe the same item, field for field.
-##
-## Used by the round-trip test. Compares everything SlotData.Update() copies,
-## because that is the game's own definition of sameness -- a comparison that
-## checked fewer fields would let exactly the losses this class exists to
-## prevent pass as equal.
 static func equivalent(a: SlotData, b: SlotData) -> bool:
 	return differences(a, b).is_empty()
 
 
 ## Field-by-field differences between two items, as human-readable strings.
+##
+## Compares everything SlotData.Update() copies, because that is the game's own
+## definition of sameness -- a comparison that checked fewer fields would let
+## exactly the losses this class exists to prevent pass as equal.
+##
+## Weapon-only fields are compared only on weapons: a bandage's `mode` is
+## meaningless, is never sent, and rebuilds to the default, so comparing it
+## would report a difference that does not exist.
 static func differences(a: SlotData, b: SlotData) -> Array:
 	var diffs := []
 	if a == null or b == null:
@@ -173,23 +268,30 @@ static func differences(a: SlotData, b: SlotData) -> Array:
 	var b_key := str(b.itemData.file) if b.itemData != null else "<none>"
 	if a_key != b_key:
 		diffs.append("item_key: %s != %s" % [a_key, b_key])
+		return diffs
 
-	if int(a.amount) != int(b.amount):
+	var item: ItemData = a.itemData
+
+	if carries_amount(item) and int(a.amount) != int(b.amount):
 		diffs.append("amount: %d != %d" % [a.amount, b.amount])
-	if not is_equal_approx(float(a.condition), float(b.condition)):
+
+	if has_condition(item) and not is_equal_approx(float(a.condition), float(b.condition)):
 		diffs.append("condition: %s != %s" % [a.condition, b.condition])
-	if int(a.mode) != int(b.mode):
-		diffs.append("mode: %d != %d" % [a.mode, b.mode])
-	if int(a.zoom) != int(b.zoom):
-		diffs.append("zoom: %d != %d" % [a.zoom, b.zoom])
-	if not is_equal_approx(float(a.position), float(b.position)):
-		diffs.append("mount_position: %s != %s" % [a.position, b.position])
-	if bool(a.chamber) != bool(b.chamber):
-		diffs.append("chamber: %s != %s" % [a.chamber, b.chamber])
-	if bool(a.casing) != bool(b.casing):
-		diffs.append("casing: %s != %s" % [a.casing, b.casing])
+
 	if str(a.state) != str(b.state):
 		diffs.append("state: '%s' != '%s'" % [a.state, b.state])
+
+	if is_weapon(item):
+		if int(a.mode) != int(b.mode):
+			diffs.append("mode: %d != %d" % [a.mode, b.mode])
+		if int(a.zoom) != int(b.zoom):
+			diffs.append("zoom: %d != %d" % [a.zoom, b.zoom])
+		if not is_equal_approx(float(a.position), float(b.position)):
+			diffs.append("mount_position: %s != %s" % [a.position, b.position])
+		if bool(a.chamber) != bool(b.chamber):
+			diffs.append("chamber: %s != %s" % [a.chamber, b.chamber])
+		if bool(a.casing) != bool(b.casing):
+			diffs.append("casing: %s != %s" % [a.casing, b.casing])
 
 	var a_att := _attachment_keys(a)
 	var b_att := _attachment_keys(b)
