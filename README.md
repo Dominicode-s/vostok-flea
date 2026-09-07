@@ -14,24 +14,49 @@ what a trade is worth ever lives on this side of the wire.
 | Milestone | Content | State |
 |---|---|---|
 | M0 | Network + capability spike | **passed** - see [docs/M0-SPIKE.md](docs/M0-SPIKE.md) |
-| M2 | Read-only client (browse + price data) | in progress — terminal placeable, catalog live; browse blocked on player key |
-| M3 | Selling: escrow, deliveries, courier crate | not started |
+| M2 | Read-only client (browse + price data) | **complete** — terminal, browse, detail, orders, wallet, setup |
+| M3 | Selling: escrow, deliveries, courier crate | not started — `ItemBridge` done and server-validated |
 | M4 | Buying | not started |
 
 M0 passed: `HTTPRequest` over HTTPS works from a mod in an exported build, so
 the transport design stands and the store-and-forward fallback is not needed.
-M2 is blocked only on a working player key -- the documented test key returns
-401 on every authenticated endpoint.
+
+M2 is complete and shippable on its own as a market-prices mod. The only
+outstanding art dependency is a 3D model for the terminal — it currently
+renders as a placeholder box.
 
 ## Layout
 
 ```
-spike/          Milestone 0 throwaway capability prober (not production code)
-  mod.txt
-  mods/FleaSpike/Main.gd
-tools/          Build + deploy scripts
-docs/           Findings, decisions, and questions back to the server side
+mod.txt                     Mod loader manifest
+mods/FleaMarket/
+  Main.gd                   Autoload: registration, catalog, terminal lifecycle
+  MarketClient.gd           The ONLY component that touches the network
+  Catalog.gd                Cached item catalog + the escrow version guard
+  ItemBridge.gd             SlotData <-> canonical descriptor
+  TerminalAssets.gd         Runtime-generated ItemData, icon, inventory sprite
+  FleaTerminal.gd           The placed fixture's Interact()/UpdateTooltip()
+  FleaTerminal_F.tscn       Placed world scene  <-- needs a real 3D model
+  ui/                       The six terminal screens
+spike/                      Milestone 0 throwaway capability prober
+tests/                      Headless test suite
+tools/                      Build, deploy, parse-check, test, validate
+docs/                       Findings, the catalog, questions to the server side
 ```
+
+## Development
+
+```bash
+tools/check-gdscript.sh        # parse-check every script (~10s, no game launch)
+tools/run-tests.sh             # headless test suite
+tools/validate-descriptors.sh  # ItemBridge vs the server's own validator
+pwsh -File tools/build.ps1     # build + deploy the VMZ
+```
+
+`tools/check-gdscript.sh` and `tools/run-tests.sh` need a Godot 4.6.2-stable
+binary (matching the game's build hash) at `D:/Projects/tools/godot/`, or
+`GODOT_BIN` pointing at one. `validate-descriptors.sh` needs dev keys in
+`.dev-keys.json`, which is gitignored.
 
 ## Building the spike
 
