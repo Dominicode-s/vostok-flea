@@ -16,6 +16,8 @@ extends RefCounted
 ## ItemData below by its user:// path, so these files must exist before that
 ## scene is ever loaded.
 
+const TerminalModel := preload("res://mods/FleaMarket/TerminalModel.gd")
+
 const ITEM_KEY := "FleaTerminal"
 const DISPLAY_NAME := "Flea Market Terminal"
 
@@ -32,6 +34,12 @@ const ICON_PX := 128
 ## Build every generated asset. Returns true when the ItemData is on disk and
 ## loadable, which is the precondition for the world scene resolving.
 static func build() -> bool:
+	# The world scene references the mesh by its user:// path, so it has to
+	# exist before that scene is ever loaded.
+	var used_model := TerminalModel.build()
+	print("[FleaMarket] terminal mesh: %s" % (
+		"model/terminal.obj" if used_model else "placeholder box (no model supplied)"))
+
 	var icon := _build_icon()
 	if ResourceSaver.save(icon, ICON_PATH) != OK:
 		push_error("FleaMarket: could not save terminal icon")

@@ -6,18 +6,7 @@
 [ext_resource type="Resource" path="user://FleaMarket_TerminalItem.tres" id="4"]
 [ext_resource type="Texture2D" path="res://UI/Sprites/Icon_Object.png" id="5"]
 [ext_resource type="Material" path="res://Modular/Materials/MT_Hint.tres" id="6"]
-
-[sub_resource type="StandardMaterial3D" id="MT_Terminal"]
-albedo_color = Color(0.11, 0.13, 0.12, 1)
-metallic = 0.35
-roughness = 0.55
-emission_enabled = true
-emission = Color(0.24, 0.92, 0.45, 1)
-emission_energy_multiplier = 0.45
-
-[sub_resource type="BoxMesh" id="MS_Terminal"]
-material = SubResource("MT_Terminal")
-size = Vector3(0.6, 1.2, 0.45)
+[ext_resource type="ArrayMesh" path="user://FleaMarket_TerminalMesh.res" id="7"]
 
 [sub_resource type="BoxShape3D" id="SH_Terminal"]
 size = Vector3(0.6, 1.2, 0.45)
@@ -36,13 +25,11 @@ size = Vector2(0.6, 0.6)
 script = ExtResource("1")
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-mesh = SubResource("MS_Terminal")
+mesh = ExtResource("7")
 
 [node name="Collider_R" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 layers = 0
-mesh = SubResource("MS_Terminal")
+mesh = ExtResource("7")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Collider_R" groups=["Furniture", "Interactable"]]
 collision_layer = 16
@@ -50,12 +37,12 @@ script = ExtResource("2")
 surface = "Metal"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Collider_R/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 shape = SubResource("SH_Terminal")
 
 [node name="Collider_P" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 layers = 0
-mesh = SubResource("MS_Terminal")
+mesh = ExtResource("7")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Collider_P"]
 collision_layer = 32
@@ -63,6 +50,7 @@ script = ExtResource("2")
 surface = "Metal"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Collider_P/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 shape = SubResource("SH_Terminal")
 
 [node name="Furniture" type="Node3D" parent="." node_paths=PackedStringArray("mesh", "colliderR", "colliderP")]

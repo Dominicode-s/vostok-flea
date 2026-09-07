@@ -23,6 +23,36 @@ func _ready() -> void:
 	# by path rather than preloading keeps this script parseable in isolation,
 	# which matters because tools/check-gdscript.sh compiles it without the game.
 	_game_data = load("res://Resources/GameData.tres")
+	_fit_collision_to_mesh()
+
+
+## Resize the interaction and physics boxes to the mesh actually in use.
+##
+## The scene ships sized for the placeholder. Dropping in a real model of a
+## different size would otherwise leave the player interacting with a box that
+## does not match what they see -- or worse, unable to reach the terminal at
+## all because the collider sits inside it.
+func _fit_collision_to_mesh() -> void:
+	var mesh_node := get_node_or_null("Mesh") as MeshInstance3D
+	if mesh_node == null or mesh_node.mesh == null:
+		return
+
+	var aabb: AABB = mesh_node.mesh.get_aabb()
+	if aabb.size.x <= 0.01 or aabb.size.y <= 0.01:
+		return
+	var centre := aabb.position + aabb.size * 0.5
+
+	for path in ["Collider_R/StaticBody3D/CollisionShape3D",
+			"Collider_P/StaticBody3D/CollisionShape3D"]:
+		var node := get_node_or_null(path) as CollisionShape3D
+		if node == null:
+			continue
+		var box := BoxShape3D.new()
+		# Fractionally proud of the mesh so the interaction ray catches the
+		# object rather than slipping past a coincident face.
+		box.size = aabb.size * 1.02
+		node.shape = box
+		node.position = centre
 
 
 func UpdateTooltip() -> void:
