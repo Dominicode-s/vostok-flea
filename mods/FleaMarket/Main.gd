@@ -5,13 +5,16 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.4.0"
+const VERSION := "0.5.0"
 const LOG_PREFIX := "[FleaMarket] "
 
 const Fixtures := preload("res://mods/FleaMarket/Fixtures.gd")
 const MarketClientScript := preload("res://mods/FleaMarket/MarketClient.gd")
 const CatalogScript := preload("res://mods/FleaMarket/Catalog.gd")
 const TerminalUIScript := preload("res://mods/FleaMarket/ui/TerminalUI.gd")
+const PendingLedgerScript := preload("res://mods/FleaMarket/PendingLedger.gd")
+const SellFlow := preload("res://mods/FleaMarket/SellFlow.gd")
+const DeliveryService := preload("res://mods/FleaMarket/DeliveryService.gd")
 
 ## Player key lives in user:// and is global rather than per-save-profile: it
 ## identifies the player to the market, not a particular world. (PendingLedger
@@ -25,6 +28,7 @@ const SHELTER_POLL_SECONDS := 1.0
 
 var _client: Node = null
 var _catalog: RefCounted = null
+var _ledger: RefCounted = null
 var _poll_timer: Timer = null
 
 var _furniture_registered := false
@@ -51,6 +55,9 @@ func _ready() -> void:
 	_log("v%s loading" % VERSION)
 
 	_catalog = CatalogScript.new()
+	# Per save profile: an operation begun in one world must not replay while
+	# another is loaded.
+	_ledger = PendingLedgerScript.new(_profile_id())
 	_client = MarketClientScript.new()
 	_client.name = "MarketClient"
 	add_child(_client)
@@ -63,7 +70,42 @@ func _ready() -> void:
 	add_child(_poll_timer)
 
 	await _register_furniture()
-	_refresh_catalog()
+	await _refresh_catalog()
+
+	# §5.1: reconcile on load. Anything left in flight by a crash is resolved
+	# here, before the player can start something new on top of it.
+	if _ledger.count() > 0:
+		_log("%d operation(s) left in flight; recovering" % _ledger.count())
+	await reconcile()
+
+
+## Replay unfinished operations and collect anything the market owes.
+##
+## Run on load and on every terminal open, which is what makes "nothing needs
+## manual intervention" true.
+func reconcile() -> Array:
+	var messages := []
+	if _client == null or _ledger == null:
+		return messages
+
+	for result in await SellFlow.recover(get_tree(), _client, _ledger):
+		if result is Dictionary and str(result.get("message", "")) != "":
+			messages.append(str(result["message"]))
+
+	# Re-send any acknowledgement that never landed, BEFORE collecting: a
+	# delivery already spawned must be re-acked, never spawned again.
+	await DeliveryService.recover(_client, _ledger)
+
+	for message in await DeliveryService.collect(get_tree(), _client, _ledger):
+		messages.append(str(message))
+
+	for message in messages:
+		_log("reconcile: " + message)
+	return messages
+
+
+func ledger() -> RefCounted:
+	return _ledger
 
 
 # --- Furniture registration ---
@@ -261,6 +303,10 @@ func open_terminal(_terminal: Node) -> void:
 		return
 
 	_log("terminal opened")
+	# Reconcile on every terminal open. Deliveries that came due while the
+	# player was away land now, and any interrupted sale finishes.
+	reconcile()
+
 	var ui = TerminalUIScript.new()
 	ui.setup(self, _client)
 	ui.closed.connect(_on_terminal_closed)
