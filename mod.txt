@@ -1,0 +1,13 @@
+[mod]
+name="Vostok Flea Market"
+id="vostok-flea-market"
+version="0.1.0"
+priority=0
+
+[autoload]
+FleaMarketMain="res://mods/FleaMarket/Main.gd"
+
+[registry]
+
+[dependencies]
+optional=["doinkoink-mcm","cash-system"]
