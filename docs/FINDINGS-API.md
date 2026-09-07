@@ -2,8 +2,9 @@
 
 **For:** the server side
 **From:** the client side, 2026-09-07
-**Status:** none of this blocks M2, which is complete. One item blocks the
-validation loop you recommended.
+**Status:** **all five resolved and deployed, 2026-09-07.** Kept as the record
+of what was wrong and why, since each fix has a reason worth not re-litigating.
+Server commit `3a32c34`.
 
 Thank you for the descriptor work — `condition_scale`, dropping `durability`,
 plain-key attachments and the container refusal all landed exactly as proposed,
@@ -15,7 +16,13 @@ Five things surfaced while building against it.
 
 ---
 
-## 1. Phase 1 consumes the daily sell caps — blocks the loop you recommended
+## 1. Phase 1 consumes the daily sell caps — RESOLVED
+
+> **Fixed.** The cap is now split: `assertSellCapAvailable` checks in phase 1
+> (refuses while the player still has the item, so a refusal costs nothing),
+> and `chargeSellCap` charges at confirm and cannot throw (by then the goods
+> are gone and confirm may not refuse on business grounds). Verified live: 120
+> consecutive phase-1 calls, previously fatal at 40, all accepted.
 
 Your handoff note says phase 1 *"records a descriptor and moves nothing — no
 escrow, no fee, no ledger posting"*, and:
@@ -50,7 +57,12 @@ M3.
 
 ---
 
-## 2. `GET /v1/catalog` publishes neither `capacity` nor `magazine_size`
+## 2. `capacity` and `magazine_size` missing from `/catalog` — RESOLVED
+
+> **Fixed.** Both are published. `capacity` is cast to `float8`, because
+> `numeric` arrives as a *string* over JSON and a client comparing `"0" > 0`
+> would conclude nothing is a container. 28 items are containers: 12 clothing,
+> 7 backpacks, 5 rigs, 4 belt pouches.
 
 `API.md` is explicit that `capacity` is *the* container signal:
 
@@ -85,7 +97,9 @@ of the importer dropping columns.
 
 ---
 
-## 3. The `API.md` examples are a version behind the implementation
+## 3. `API.md` examples a version behind — RESOLVED
+
+> **Fixed.** Every example replaced with a real captured response.
 
 The prose is correct and the implementation is correct; the **examples** still
 show v1 shapes. `POST /v1/listings`:
@@ -108,7 +122,11 @@ but a client author who trusted the document would write a v1 client and get
 
 ---
 
-## 4. The test key in the handoff notes was stale
+## 4. Stale test key in the handoff notes — RESOLVED
+
+> **Fixed.** `CLIENT-HANDOFF.md` now points at `.dev-keys.json` rather than
+> inlining a key, and states that a stale key presents as "everything is
+> broken" rather than as an auth error.
 
 `rtv_tFRu_…eytY` returns `401 invalid player key` on every authenticated
 endpoint. `/ping` and `/catalog` need no auth, which is what made it confusing:
@@ -142,3 +160,23 @@ not recomputed, so retuning the economy stays a server config change.
 
 Buying and selling are deliberately absent and their controls are disabled with
 the reason stated. The next client milestone is M3, which is gated on §1 above.
+
+
+---
+
+## 6. Found while fixing the above
+
+**The property test's own coverage assertion was flaky.** At the default 60
+runs, `deliveriesAcked` landed anywhere in 16..33 against its own
+`toBeGreaterThan(20)`, so the suite failed about half the time on a healthy
+tree. Raised the default to 150 runs rather than lowering the threshold: the
+threshold is the point, and a self-coverage check that flakes teaches you to
+re-run until green, which is how a real regression gets waved through. Costs
+about 20 seconds. Conservation itself never failed in any run.
+
+**Available to the client now, not yet used.** With `capacity` and
+`magazine_size` published, `ItemBridge` could cross-check the game's own
+classification against the server's rather than relying on the decompiled
+`ItemData` alone. A disagreement would mean a game patch moved something under
+us — which is exactly what the escrow guard exists to catch. Worth doing before
+M3 escrows anything real.

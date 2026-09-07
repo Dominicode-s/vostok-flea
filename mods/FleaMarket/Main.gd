@@ -5,13 +5,17 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.3.0"
+const VERSION := "0.7.0"
 const LOG_PREFIX := "[FleaMarket] "
 
-const TerminalAssets := preload("res://mods/FleaMarket/TerminalAssets.gd")
+const Fixtures := preload("res://mods/FleaMarket/Fixtures.gd")
 const MarketClientScript := preload("res://mods/FleaMarket/MarketClient.gd")
 const CatalogScript := preload("res://mods/FleaMarket/Catalog.gd")
 const TerminalUIScript := preload("res://mods/FleaMarket/ui/TerminalUI.gd")
+const PendingLedgerScript := preload("res://mods/FleaMarket/PendingLedger.gd")
+const SellFlow := preload("res://mods/FleaMarket/SellFlow.gd")
+const BuyFlow := preload("res://mods/FleaMarket/BuyFlow.gd")
+const DeliveryService := preload("res://mods/FleaMarket/DeliveryService.gd")
 
 ## Player key lives in user:// and is global rather than per-save-profile: it
 ## identifies the player to the market, not a particular world. (PendingLedger
@@ -25,11 +29,26 @@ const SHELTER_POLL_SECONDS := 1.0
 
 var _client: Node = null
 var _catalog: RefCounted = null
+var _ledger: RefCounted = null
 var _poll_timer: Timer = null
 
 var _furniture_registered := false
 var _last_scene_note := ""
 var _ui: Node = null
+var _absent_ticks := 0
+## Instance id of the shelter whose terminal state is already resolved.
+var _settled_map := 0
+
+## Presence of the terminal in the player's world.
+const PRESENCE_NO := 0
+const PRESENCE_YES := 1
+## Could not tell -- the UI is not up yet. Never treated as absent: a false
+## negative grants a second terminal.
+const PRESENCE_UNKNOWN := -1
+
+## Consecutive one-second polls reporting "absent" before a terminal is
+## granted. The catalog grid fills a beat after the shelter finishes loading.
+const ABSENT_TICKS_BEFORE_GRANT := 4
 
 
 func _ready() -> void:
@@ -37,6 +56,9 @@ func _ready() -> void:
 	_log("v%s loading" % VERSION)
 
 	_catalog = CatalogScript.new()
+	# Per save profile: an operation begun in one world must not replay while
+	# another is loaded.
+	_ledger = PendingLedgerScript.new(_profile_id())
 	_client = MarketClientScript.new()
 	_client.name = "MarketClient"
 	add_child(_client)
@@ -49,7 +71,46 @@ func _ready() -> void:
 	add_child(_poll_timer)
 
 	await _register_furniture()
-	_refresh_catalog()
+	await _refresh_catalog()
+
+	# §5.1: reconcile on load. Anything left in flight by a crash is resolved
+	# here, before the player can start something new on top of it.
+	if _ledger.count() > 0:
+		_log("%d operation(s) left in flight; recovering" % _ledger.count())
+	await reconcile()
+
+
+## Replay unfinished operations and collect anything the market owes.
+##
+## Run on load and on every terminal open, which is what makes "nothing needs
+## manual intervention" true.
+func reconcile() -> Array:
+	var messages := []
+	if _client == null or _ledger == null:
+		return messages
+
+	for result in await SellFlow.recover(get_tree(), _client, _ledger):
+		if result is Dictionary and str(result.get("message", "")) != "":
+			messages.append(str(result["message"]))
+
+	for result in await BuyFlow.recover(_client, _ledger):
+		if result is Dictionary and str(result.get("message", "")) != "":
+			messages.append(str(result["message"]))
+
+	# Re-send any acknowledgement that never landed, BEFORE collecting: a
+	# delivery already spawned must be re-acked, never spawned again.
+	await DeliveryService.recover(_client, _ledger)
+
+	for message in await DeliveryService.collect(get_tree(), _client, _ledger):
+		messages.append(str(message))
+
+	for message in messages:
+		_log("reconcile: " + message)
+	return messages
+
+
+func ledger() -> RefCounted:
+	return _ledger
 
 
 # --- Furniture registration ---
@@ -71,31 +132,34 @@ func _register_furniture() -> void:
 		_log("RTVModLib unavailable - terminal cannot be registered as furniture")
 		return
 
-	# The generated ItemData must be on disk before the world scene is loaded:
-	# FleaTerminal_F.tscn references it by its user:// path.
-	if not TerminalAssets.build():
-		_log("terminal assets failed to build; skipping furniture registration")
-		return
+	# The generated ItemData and mesh must be on disk before the placed scenes
+	# are loaded: each _F.tscn references them by their user:// paths.
+	for spec in Fixtures.ALL:
+		if not Fixtures.build(spec):
+			_log("%s assets failed to build; skipping furniture registration"
+				% spec["key"])
+			return
 
 	# Registration has to happen in _ready(), before the shelter systems copy
 	# from the shared stores. Hooks and registry may not be up yet, so wait.
 	if lib.has_signal("frameworks_ready"):
 		await lib.frameworks_ready
 
-	var result: Dictionary = lib.register_furniture({
-		TerminalAssets.ITEM_KEY: {
-			"item_path": TerminalAssets.ITEM_PATH,
-			"scene_path": TerminalAssets.SCENE_PATH,
-			# No trader_pools and no recipe on purpose: the terminal is the
-			# thing that lets you trade at all, so putting it behind a trader
-			# would be circular. It is granted once instead, below.
+	var entries := {}
+	for spec in Fixtures.ALL:
+		entries[spec["key"]] = {
+			"item_path": Fixtures.item_path(spec),
+			"scene_path": spec["scene_path"],
+			# No trader_pools and no recipe on purpose: these are the things
+			# that let you trade at all, so putting them behind a trader would
+			# be circular. They are granted instead, below.
 			"trader_pools": [],
-		},
-	})
+		}
 
+	var result: Dictionary = lib.register_furniture(entries)
 	_furniture_registered = bool(result.get("ok", false))
 	if _furniture_registered:
-		_log("terminal registered as furniture (item '%s')" % TerminalAssets.ITEM_KEY)
+		_log("registered %d fixture(s) as furniture" % entries.size())
 	else:
 		_log("furniture registration failed: %s" % str(result))
 
@@ -109,36 +173,112 @@ func _check_shelter() -> void:
 
 	_log_scene_state(tree)
 
-	if not _furniture_registered or _terminal_granted():
+	if not _furniture_registered:
 		return
 
 	var map := tree.root.get_node_or_null("Map")
 	if map == null or not "mapType" in map or str(map.mapType) != "Shelter":
+		_absent_ticks = 0
+		# Leaving the shelter invalidates the settled state, so re-entering
+		# re-checks. A new game rebuilds the map, which gives a new instance id.
+		_settled_map = 0
 		return
 
-	_grant_terminal(map)
+	# Settled for this shelter: stop looking. Without this the presence check
+	# walks the whole shelter tree once a second forever, which is the mistake
+	# Quick Stack shipped a fix for.
+	if _settled_map == map.get_instance_id():
+		return
+
+	var missing := []
+	for spec in Fixtures.ALL:
+		match _fixture_presence(map, spec):
+			PRESENCE_UNKNOWN:
+				# Could not read the catalog grid. Say nothing rather than
+				# guess: a false "absent" grants a duplicate.
+				_absent_ticks = 0
+				return
+			PRESENCE_NO:
+				missing.append(spec)
+
+	if missing.is_empty():
+		_absent_ticks = 0
+		_settled_map = map.get_instance_id()
+		_mark_terminal_granted()
+		return
+
+	# The catalog grid populates a beat after the shelter loads, so a single
+	# empty read is not evidence of anything. Require several consecutive
+	# absent reads before acting.
+	_absent_ticks += 1
+	if _absent_ticks >= ABSENT_TICKS_BEFORE_GRANT:
+		_absent_ticks = 0
+		_settled_map = map.get_instance_id()
+		for spec in missing:
+			_grant_fixture(map, spec)
 
 
-## Put one terminal into the player's build catalog, once ever.
+## Does the player actually have a terminal -- placed in the shelter, or
+## waiting in the build catalog?
+##
+## This replaced a persisted "already granted" flag, which had a hole. The flag
+## lived in FleaMarket.cfg, and a .cfg survives the game's save reset while the
+## generated ItemData -- a .tres -- does not (Loader.FormatSave deletes every
+## top-level *.tres). So after starting a new game the mod believed it had
+## granted a terminal that no longer existed anywhere, and would never grant
+## another.
+##
+## Asking the world is strictly better than remembering: it is correct after a
+## save wipe, after a profile switch, and if the player scraps the terminal.
+func _fixture_presence(map: Node, spec: Dictionary) -> int:
+	# Catalog grid first: it is a handful of children, where the placed-terminal
+	# search walks the entire shelter.
+	var interface := map.get_node_or_null("Core/UI/Interface")
+	if interface == null or not "catalogGrid" in interface:
+		return PRESENCE_UNKNOWN
+	var grid = interface.catalogGrid
+	if grid == null or not is_instance_valid(grid):
+		return PRESENCE_UNKNOWN
+
+	# By identity, never by node name -- see Fixtures.find_placed. Matching on
+	# the name reported a placed fixture as absent after any reload, which made
+	# this hand out duplicates.
+	if Fixtures.find_placed(map, spec) != null:
+		return PRESENCE_YES
+
+	for child in grid.get_children():
+		if not "slotData" in child or child.slotData == null:
+			continue
+		if child.slotData.itemData == null:
+			continue
+		if str(child.slotData.itemData.file) == str(spec["key"]):
+			return PRESENCE_YES
+	return PRESENCE_NO
+
+
+## Put one fixture into the player's build catalog.
 ##
 ## AddToCatalog is how vanilla hands furniture to the player -- it is the same
 ## call the game makes when you pick a placed piece back up. The catalog grid is
 ## where unplaced furniture lives; from there the player positions it in decor
 ## mode and the game's own ShelterSave keeps it there.
-func _grant_terminal(map: Node) -> void:
+func _grant_fixture(map: Node, spec: Dictionary) -> void:
 	var interface := map.get_node_or_null("Core/UI/Interface")
 	if interface == null or not interface.has_method("AddToCatalog"):
 		return
 
-	var item := TerminalAssets.load_item()
+	var item := Fixtures.load_item(spec)
 	if item == null:
-		_log("cannot grant terminal: ItemData did not load")
+		_log("cannot grant %s: ItemData did not load" % spec["key"])
 		return
 
 	interface.AddToCatalog(item, null)
 	_mark_terminal_granted()
-	_log("terminal added to the build catalog - place it from the decor menu")
-	_flash("FLEA MARKET\nTerminal added to your build catalog", Color(0.4, 1.0, 0.5), 6.0)
+	_log("%s added to the build catalog - place it from the decor menu"
+		% spec["display_name"])
+	_flash("FLEA MARKET
+%s added to your build catalog" % spec["display_name"],
+		Color(0.4, 1.0, 0.5), 6.0)
 
 
 func _log_scene_state(tree: SceneTree) -> void:
@@ -170,6 +310,10 @@ func open_terminal(_terminal: Node) -> void:
 		return
 
 	_log("terminal opened")
+	# Reconcile on every terminal open. Deliveries that came due while the
+	# player was away land now, and any interrupted sale finishes.
+	reconcile()
+
 	var ui = TerminalUIScript.new()
 	ui.setup(self, _client)
 	ui.closed.connect(_on_terminal_closed)
@@ -243,18 +387,15 @@ func save_player_key(key: String) -> void:
 	_log("player key saved")
 
 
-## Whether this player has already been given a terminal.
+## Record that this profile has a terminal.
 ##
-## Keyed per save profile: profiles are separate worlds, and a terminal granted
-## in one is not present in another. Secure Container shipped a fix for exactly
-## this class of bug -- one shared file meant a container opened showing another
-## save's items.
-func _terminal_granted() -> bool:
-	return bool(_config().get_value("granted", _profile_id(), false))
-
-
+## Kept only as a breadcrumb for support ("has this save ever had one?").
+## Nothing branches on it: _terminal_presence asks the world instead, because a
+## remembered flag outlived the thing it described. See that function.
 func _mark_terminal_granted() -> void:
 	var cfg := _config()
+	if bool(cfg.get_value("granted", _profile_id(), false)):
+		return
 	cfg.set_value("granted", _profile_id(), true)
 	cfg.save(CONFIG_PATH)
 

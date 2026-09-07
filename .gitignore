@@ -13,3 +13,6 @@
 Thumbs.db
 .DS_Store
 .dev-keys.json
+
+# Save snapshots taken before destructive flows (M3/M4)
+/save-backups/
