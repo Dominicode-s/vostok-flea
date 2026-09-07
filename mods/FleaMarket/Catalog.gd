@@ -1,6 +1,7 @@
 extends RefCounted
 
-# No class_name on purpose -- see ShelterFixtures.gd.
+# No class_name on purpose: a global class registered from inside a mod archive
+# collides across mods and survives reloads badly. Callers preload it.
 
 ## The item catalog as the server defines it, cached locally.
 ##
