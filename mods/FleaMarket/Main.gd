@@ -33,6 +33,13 @@ var _poll_timer: Timer = null
 var _client: Node = null
 var _catalog: RefCounted = null
 
+## Diagnostics. Placement failing silently cost a play session once already:
+## the mod logged that it loaded and then nothing, which is indistinguishable
+## from the timer never firing. These log on CHANGE only, so they narrate what
+## the mod can see without spamming a line every second.
+var _last_scene_note := ""
+var _warned_no_player := false
+
 
 func _ready() -> void:
 	Engine.set_meta("FleaMarketMain", self)
@@ -119,6 +126,8 @@ func _check_shelter() -> void:
 	if tree == null:
 		return
 
+	_log_scene_state(tree)
+
 	var map := ShelterFixtures.find_shelter(tree)
 	if map == null:
 		# Not in a shelter. The old node died with the previous scene; drop the
@@ -130,10 +139,20 @@ func _check_shelter() -> void:
 	if is_instance_valid(_terminal) and _terminal.is_inside_tree():
 		return
 
-	_place_terminal(map)
+	# The player body appears a beat after the map does. No player means no
+	# anchor, so wait for the next tick rather than placing at the origin.
+	var player: Node3D = ShelterFixtures.find_player(map)
+	if player == null:
+		if not _warned_no_player:
+			_warned_no_player = true
+			_log("shelter found but no Core/Controller yet; waiting")
+		return
+	_warned_no_player = false
+
+	_place_terminal(map, player)
 
 
-func _place_terminal(map: Node3D) -> void:
+func _place_terminal(map: Node3D, player: Node3D) -> void:
 	var parent := ShelterFixtures.fixture_parent(map)
 
 	# Re-entering the shelter rebuilds the scene from scratch, but a mid-session
@@ -148,10 +167,32 @@ func _place_terminal(map: Node3D) -> void:
 	# contract notes in ShelterFixtures.gd.
 	ShelterFixtures.finalise(terminal)
 
+	# Position after parenting so global_position is meaningful.
+	var target: Vector3 = ShelterFixtures.placement_for(player)
+	terminal.global_position = target
+
 	terminal.set_open_handler(_on_terminal_opened)
 	_terminal = terminal
 
-	_log("terminal placed in %s at %s" % [map.get_path(), terminal.position])
+	_log("terminal placed in shelter '%s' at %s (player at %s)" % [
+		str(map.mapName) if "mapName" in map else "?",
+		target, player.global_position])
+
+
+func _log_scene_state(tree: SceneTree) -> void:
+	var map := tree.root.get_node_or_null("Map")
+	var note := ""
+	if map == null:
+		note = "no /root/Map (menu or loading)"
+	elif not "mapType" in map:
+		note = "/root/Map has no mapType property"
+	else:
+		note = "map '%s' type '%s'" % [
+			str(map.mapName) if "mapName" in map else "?", str(map.mapType)]
+
+	if note != _last_scene_note:
+		_last_scene_note = note
+		_log("scene: " + note)
 
 
 # --- Terminal ---

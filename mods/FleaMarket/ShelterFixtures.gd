@@ -25,11 +25,30 @@ extends RefCounted
 const INTERACT_COLLISION_LAYER := 16
 const INTERACTABLE_GROUP := "Interactable"
 
-# The bunker's living area, read from Assets/Bunker/Bunker.tscn: canteen table
-# at (-3.5, 0, -10) with a stool beside it at (-3, 0, -10). The terminal sits on
-# that table so it reads as part of the room rather than dropped in a corridor.
-const TERMINAL_POSITION := Vector3(-3.5, 1.0, -10.0)
+# INTERIM PLACEMENT.
+#
+# The first cut hardcoded the Bunker's canteen table at (-3.5, 0, -10). That was
+# wrong: there are four shelters -- Bunker, Cabin, Tent, Attic -- and all of them
+# declare mapType "Shelter", so the terminal was placed in every one of them at
+# coordinates that only mean anything in the Bunker. In the Cabin, which is an
+# empty shell around the origin, those coordinates are outside the building.
+#
+# Per-shelter coordinate tables would only move the guesswork around, because
+# nothing in the scenes tells us where a wall is. So placement is anchored to
+# the player instead: it works in any shelter, including ones the developer adds
+# later, without knowing any geometry.
+#
+# The real answer is the game's own furniture system -- Furniture nodes carry an
+# ItemData and persist through ShelterSave.furnitures, so the player places the
+# terminal where they want it and it stays there. That is the follow-up, and the
+# courier crate needs it too (FurnitureSave has `container` and `storage`).
 const TERMINAL_SIZE := Vector3(0.42, 0.5, 0.28)
+
+## How far in front of the player the terminal is placed, and how high off their
+## origin. Chest height at just under two metres reads as "on a surface in front
+## of you" rather than "embedded in the floor".
+const PLACE_DISTANCE := 1.8
+const PLACE_HEIGHT := 0.6
 
 const TERMINAL_NODE_NAME := "FleaMarketTerminal"
 
@@ -40,7 +59,6 @@ static func build_terminal(interact_script: Script) -> Node3D:
 	var root := Node3D.new()
 	root.name = TERMINAL_NODE_NAME
 	root.set_script(interact_script)
-	root.position = TERMINAL_POSITION
 
 	# --- Visible body ---
 	var mesh_instance := MeshInstance3D.new()
@@ -119,3 +137,30 @@ static func fixture_parent(map: Node3D) -> Node3D:
 	if content != null and content is Node3D:
 		return content as Node3D
 	return map
+
+
+## The player body, or null if the scene has not finished building.
+##
+## Two nodes sit in the "Player" group -- the Controller (CharacterBody3D) and a
+## line-of-sight StaticBody3D under the camera. Only the Controller is the body
+## whose position means "where the player is standing", so it is matched by type
+## rather than by taking the first group member.
+static func find_player(map: Node3D) -> Node3D:
+	var controller := map.get_node_or_null("Core/Controller")
+	if controller is CharacterBody3D:
+		return controller as Node3D
+	return null
+
+
+## Where the terminal goes: in front of the player, at chest height.
+##
+## Returns global coordinates; the caller converts to the parent's local space.
+static func placement_for(player: Node3D) -> Vector3:
+	var basis := player.global_transform.basis
+	# -Z is forward in Godot. Flattened to the horizontal plane so looking up or
+	# down does not bury the terminal in the floor or hang it from the ceiling.
+	var forward := Vector3(-basis.z.x, 0.0, -basis.z.z)
+	if forward.length_squared() < 0.001:
+		forward = Vector3(0, 0, -1)
+	forward = forward.normalized()
+	return player.global_position + forward * PLACE_DISTANCE + Vector3.UP * PLACE_HEIGHT
