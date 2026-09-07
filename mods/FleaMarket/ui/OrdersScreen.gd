@@ -205,7 +205,7 @@ func _cancel(listing_id: int) -> void:
 		return
 	_busy = true
 	var res: Dictionary = await _client.request_json(
-		"DELETE", "/listings/%d" % listing_id, {})
+		"DELETE", "/listings/%d" % listing_id, _client.new_idempotency_key())
 	_busy = false
 
 	if not res["ok"]:
