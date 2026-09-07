@@ -5,7 +5,7 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.5.4"
+const VERSION := "0.6.0"
 const LOG_PREFIX := "[FleaMarket] "
 
 const Fixtures := preload("res://mods/FleaMarket/Fixtures.gd")
@@ -14,6 +14,7 @@ const CatalogScript := preload("res://mods/FleaMarket/Catalog.gd")
 const TerminalUIScript := preload("res://mods/FleaMarket/ui/TerminalUI.gd")
 const PendingLedgerScript := preload("res://mods/FleaMarket/PendingLedger.gd")
 const SellFlow := preload("res://mods/FleaMarket/SellFlow.gd")
+const BuyFlow := preload("res://mods/FleaMarket/BuyFlow.gd")
 const DeliveryService := preload("res://mods/FleaMarket/DeliveryService.gd")
 
 ## Player key lives in user:// and is global rather than per-save-profile: it
@@ -89,6 +90,10 @@ func reconcile() -> Array:
 		return messages
 
 	for result in await SellFlow.recover(get_tree(), _client, _ledger):
+		if result is Dictionary and str(result.get("message", "")) != "":
+			messages.append(str(result["message"]))
+
+	for result in await BuyFlow.recover(_client, _ledger):
 		if result is Dictionary and str(result.get("message", "")) != "":
 			messages.append(str(result["message"]))
 
