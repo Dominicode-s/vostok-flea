@@ -14,16 +14,26 @@ what a trade is worth ever lives on this side of the wire.
 | Milestone | Content | State |
 |---|---|---|
 | M0 | Network + capability spike | **passed** - see [docs/M0-SPIKE.md](docs/M0-SPIKE.md) |
-| M2 | Read-only client (browse + price data) | **complete** — terminal, browse, detail, orders, wallet, setup |
-| M3 | Selling: escrow, deliveries, courier crate | not started — `ItemBridge` done and server-validated |
-| M4 | Buying | not started |
+| M2 | Read-only client (browse + price data) | **complete** |
+| M3 | Selling: escrow, deliveries, courier crate | **complete** |
+| M4 | Buying | **complete** |
 
-M0 passed: `HTTPRequest` over HTTPS works from a mod in an exported build, so
-the transport design stands and the store-and-forward fallback is not needed.
+All of v1's client scope is built and exercised in-game: browse, price data,
+selling with escrow and deliveries, and buying. Buy orders / wanted ads are
+v1.1 and deliberately absent — there are no endpoints, so a tab would be a
+promise the server cannot keep.
 
-M2 is complete and shippable on its own as a market-prices mod. The only
-outstanding art dependency is a 3D model for the terminal — it currently
-renders as a placeholder box.
+What is left before this ships to players:
+
+- **3D models** for the terminal and the crate. Drop `model/terminal.obj` and
+  `model/crate.obj` into `mods/FleaMarket/model/` and they are picked up
+  automatically; see the README there. Until then both render as placeholder
+  boxes, fully functional.
+- **Restore the production delivery ETA.** It is currently set to ~20s for
+  testing; production is a 15-minute base. The wait is the intended feel, not
+  friction — see §7.5.
+- **A player key per player.** The mod ships with none; each player pastes one
+  into the terminal's Setup screen once.
 
 ## Layout
 
@@ -71,6 +81,22 @@ reach the main menu, and quit; the probe writes its findings to:
 ```
 %APPDATA%\Road to Vostok\FleaSpike_Report.json
 ```
+
+## Where the safety actually lives
+
+Four files carry the "no failure can lose a player's property" guarantee, and
+they are the ones to read first if you are picking this up:
+
+| File | What it protects |
+|---|---|
+| `PendingLedger.gd` | The crash-recovery record. Written and flushed to disk **before** anything is destroyed — the only window in the design where property can genuinely be lost, and it is entirely client-side. |
+| `SellFlow.gd` | Two-phase sell. Recovery re-checks the inventory rather than assuming, because writing the ledger first creates the opposite risk: a crash between the write and the destroy would otherwise publish a listing for an item the player still holds. |
+| `BuyFlow.gd` | Two-phase buy. Cash is fungible, so there is no descriptor to match on recovery — the trade-offs that follow from that are documented in the file. |
+| `DeliveryService.gd` | Spawns goods, records that it did, **then** acknowledges. The server cannot tell a lost ACK from a re-request, so a delivery already marked spawned is only ever re-acknowledged. |
+
+Phase 2 of every flow returns **HTTP 200 whether or not it did what you asked**
+— `returned` and `credited` are not errors. Every one of those paths is
+reachable on demand via `tools/chaos_server.py`.
 
 ## Non-negotiables
 
