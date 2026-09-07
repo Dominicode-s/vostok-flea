@@ -31,7 +31,7 @@ rejected. See §3.
 | Own GDScript executes in a mod | Assumed, unconfirmed | **PASS** | The spike is an autoload; its `_ready()` ran and logged. Independently, all eight existing mods are GDScript autoloads — see §2 |
 | `HTTPRequest` works | **Unproven — the risk** | **PASS** | `GET /v1/ping` → `result=0` (`RESULT_SUCCESS`), `code=200`, **259 ms** |
 | HTTPS/TLS works in the exported build | Unknown | **PASS** | Scheme was `https://`. TLS handshake succeeded; response carried `Via: 1.1 Caddy` |
-| Add a new interactable scene to the safehouse | Confirmed possible | **Available, not yet exercised** | Not probed by placing an object. `RTVModLib` exposes the registry buckets it needs — see §4 |
+| Add a new interactable scene to the safehouse | Confirmed possible | **PASS** | Closed in M2. The terminal is registered furniture: granted to the build catalog, placed by the player in decor mode, and interacted with in-game — confirmed on screen |
 | Draw custom UI | Assumed | **PASS** | `PanelContainer` + `Label` parented to `/root` and confirmed in-tree. Also **visually confirmed in-game** — the panel renders on screen reading `HTTPS OK · ping 200` |
 | Write custom keys into the game save | Confirmed possible | **PASS** | `ConfigFile` round-trip: nested dict, float `0.6234`, UTF-8 string, all read back identical |
 | Survives game patches | Low breakage historically | Unchanged | Not testable in one session |
@@ -114,9 +114,19 @@ reason for existing, and it is 401 right now.
 
 ## 4. Placing the terminal and the crate
 
-Not exercised in this spike — deliberately, since the brief forbids building
-the terminal or crate before M0 is reported. But the mechanism is confirmed
-present: `RTVModLib`'s registry exposes every bucket the job needs.
+**Resolved in M2 (2026-09-07).** The terminal is registered furniture. It is
+granted to the player's build catalog, positioned by the player in decor mode,
+and persists through the game's own `ShelterSave`. Interacting with a placed
+terminal reaches the mod and renders live server data — confirmed in-game.
+
+The first attempt placed it at fixed Bunker coordinates, which put it outside
+the building in the Cabin. Furniture placement removes the whole class of bug:
+there is no coordinate to be wrong about, and it works in every shelter.
+
+`FurnitureSave` persists `container` and `storage`, so the courier crate gets
+its persistence from the same mechanism for free.
+
+The original finding, that the registry exposes the needed buckets:
 
 ```
 ITEMS  LOOT  SCENES  SCENE_PATHS  SCENE_NODES  SHELTERS  MAPS  INPUTS  RESOURCES

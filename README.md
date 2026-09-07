@@ -14,7 +14,7 @@ what a trade is worth ever lives on this side of the wire.
 | Milestone | Content | State |
 |---|---|---|
 | M0 | Network + capability spike | **passed** - see [docs/M0-SPIKE.md](docs/M0-SPIKE.md) |
-| M2 | Read-only client (browse + price data) | not started |
+| M2 | Read-only client (browse + price data) | in progress — terminal placeable, catalog live; browse blocked on player key |
 | M3 | Selling: escrow, deliveries, courier crate | not started |
 | M4 | Buying | not started |
 
