@@ -13,13 +13,15 @@ what a trade is worth ever lives on this side of the wire.
 
 | Milestone | Content | State |
 |---|---|---|
-| M0 | Network + capability spike | in progress |
+| M0 | Network + capability spike | **passed** - see [docs/M0-SPIKE.md](docs/M0-SPIKE.md) |
 | M2 | Read-only client (browse + price data) | not started |
 | M3 | Selling: escrow, deliveries, courier crate | not started |
 | M4 | Buying | not started |
 
-M0 is blocking. Nothing else gets built until the capability table in
-`docs/M0-SPIKE.md` is filled in from an actual exported-build run.
+M0 passed: `HTTPRequest` over HTTPS works from a mod in an exported build, so
+the transport design stands and the store-and-forward fallback is not needed.
+M2 is blocked only on a working player key -- the documented test key returns
+401 on every authenticated endpoint.
 
 ## Layout
 
