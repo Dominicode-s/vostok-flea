@@ -333,7 +333,7 @@ func _probe_http() -> void:
 func _request(method: String, path: String, auth: bool, body: String) -> Dictionary:
 	var req := HTTPRequest.new()
 	req.timeout = HTTP_TIMEOUT
-	req.download_body_size_limit = BODY_LIMIT
+	req.body_size_limit = BODY_LIMIT
 	add_child(req)
 
 	var headers := ["Accept: application/json", "User-Agent: vostok-flea-spike/0.1.0"]

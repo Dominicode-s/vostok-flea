@@ -194,7 +194,9 @@ func _send_once(method: String, path: String, body: String) -> Dictionary:
 
 	var req := HTTPRequest.new()
 	req.timeout = REQUEST_TIMEOUT
-	req.download_body_size_limit = BODY_LIMIT
+	# Godot 4.6 calls this body_size_limit; download_body_size_limit was the 3.x
+	# name and silently fails to assign, leaving the cap off entirely.
+	req.body_size_limit = BODY_LIMIT
 	add_child(req)
 
 	var headers := [
