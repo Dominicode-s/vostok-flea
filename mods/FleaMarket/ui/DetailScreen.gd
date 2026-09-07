@@ -241,7 +241,9 @@ func _buy_panel(quote: Dictionary) -> Control:
 	var crate := DeliveryService.find_crate(get_tree())
 
 	var reason := ""
-	if not _ui.is_online():
+	if not Stash.cash_available():
+		reason = Stash.CASH_MISSING
+	elif not _ui.is_online():
 		reason = "The market is unreachable, so buying is disabled."
 	elif total <= 0:
 		reason = "This listing has no price."

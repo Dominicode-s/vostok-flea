@@ -1,13 +1,18 @@
 [mod]
 name="Vostok Flea Market"
 id="vostok-flea-market"
-version="0.6.0"
+version="0.7.0"
 priority=0
+author="Dominicode-s"
 
 [autoload]
 FleaMarketMain="res://mods/FleaMarket/Main.gd"
 
 [registry]
 
+; cash-system is OPTIONAL, not required, on purpose. Trading needs it -- fees
+; and payments are physical cash -- but browsing and price-checking work
+; perfectly without it, and blocking the whole mod would remove a feature that
+; works. The screens that need cash say so plainly instead.
 [dependencies]
 optional=["doinkoink-mcm","cash-system"]

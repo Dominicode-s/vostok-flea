@@ -155,6 +155,10 @@ func _show_prompt() -> void:
 		"Pick something from your stash to see what the market will pay.",
 		MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
 
+	if not Stash.cash_available():
+		_panel.add_child(MarketTheme.rule())
+		_panel.add_child(_wrapped(Stash.CASH_MISSING, MarketTheme.WARN))
+
 	var crate := DeliveryService.find_crate(get_tree())
 	if crate == null:
 		_panel.add_child(MarketTheme.rule())
@@ -199,6 +203,19 @@ func _select(entry: Dictionary) -> void:
 	_panel.add_child(_wrapped(
 		"A quote costs nothing and takes nothing. The item stays in your "
 		+ "inventory until you confirm.", MarketTheme.TEXT_DIM))
+
+	# §7.3: the broker always quotes a two-sided price, which is what makes "you
+	# can always sell" true on a market too small to have a buyer for
+	# everything. Listing may sit for 72 hours; this is instant.
+	_panel.add_child(MarketTheme.rule())
+	_panel.add_child(MarketTheme.label("OR SELL OUTRIGHT",
+		MarketTheme.FONT_SMALL, MarketTheme.TEXT_DIM))
+	var broker := MarketTheme.button("Ask the broker")
+	broker.pressed.connect(_get_broker_quote)
+	_panel.add_child(broker)
+	_panel.add_child(_wrapped(
+		"The broker buys instantly at its own price, with no listing fee and "
+		+ "no waiting. It deals only in items it stocks.", MarketTheme.TEXT_DIM))
 
 
 func _get_quote() -> void:
@@ -297,6 +314,95 @@ func _show_quote(q: Dictionary) -> void:
 	_panel.add_child(cancel)
 
 
+func _get_broker_quote() -> void:
+	if _busy or _selected.is_empty():
+		return
+	_busy = true
+
+	var main = _ui.main() if _ui.has_method("main") else null
+	var catalog = main.catalog() if main != null and main.has_method("catalog") else null
+	var ledger = main.ledger() if main != null and main.has_method("ledger") else null
+	if ledger == null:
+		_busy = false
+		return
+
+	var block: String = catalog.escrow_block_reason() if catalog != null else "No catalog."
+	if block != "":
+		_clear_panel()
+		_panel.add_child(MarketTheme.label("CANNOT SELL", MarketTheme.FONT_HEAD, MarketTheme.DANGER))
+		_panel.add_child(_wrapped(block, MarketTheme.WARN))
+		_busy = false
+		return
+
+	_clear_panel()
+	_panel.add_child(MarketTheme.label("Asking the broker...",
+		MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
+
+	var q: Dictionary = await SellFlow.broker_quote(_client, ledger, _selected["slot"])
+	_busy = false
+
+	_clear_panel()
+	if not q["ok"]:
+		_panel.add_child(MarketTheme.label("NO OFFER", MarketTheme.FONT_HEAD, MarketTheme.WARN))
+		# broker_not_bidding and not_in_basket are ordinary answers, not faults.
+		_panel.add_child(_wrapped(str(q["message"]), MarketTheme.TEXT_DIM))
+		var back := MarketTheme.button("Back")
+		back.pressed.connect(func(): _select(_selected))
+		_panel.add_child(back)
+		return
+
+	_quote = q
+	var slot: SlotData = _selected["slot"]
+	_panel.add_child(MarketTheme.label(str(slot.itemData.name),
+		MarketTheme.FONT_HEAD, MarketTheme.ACCENT))
+	_panel.add_child(MarketTheme.rule())
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var l := MarketTheme.label("The broker pays", MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM)
+	l.custom_minimum_size = Vector2(160, 0)
+	row.add_child(l)
+	row.add_child(MarketTheme.label(MarketTheme.money(q["quote_price"]),
+		MarketTheme.FONT_HEAD, MarketTheme.ACCENT))
+	_panel.add_child(row)
+
+	_panel.add_child(_wrapped(
+		"No listing fee and no commission. Cash arrives in your courier crate.",
+		MarketTheme.TEXT_DIM))
+	_panel.add_child(MarketTheme.rule())
+	_panel.add_child(_wrapped(
+		"Confirming destroys the item from your inventory.", MarketTheme.WARN))
+
+	var confirm := MarketTheme.button("Confirm and sell")
+	confirm.custom_minimum_size = Vector2(0, 38)
+	confirm.pressed.connect(_commit_broker)
+	_panel.add_child(confirm)
+
+	var cancel := MarketTheme.button("Cancel")
+	cancel.pressed.connect(func(): _select(_selected))
+	_panel.add_child(cancel)
+
+
+func _commit_broker() -> void:
+	if _busy or _quote.is_empty():
+		return
+	_busy = true
+
+	var main = _ui.main() if _ui.has_method("main") else null
+	var ledger = main.ledger() if main != null and main.has_method("ledger") else null
+	if ledger == null:
+		_busy = false
+		return
+
+	_clear_panel()
+	_panel.add_child(MarketTheme.label("Selling...", MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
+
+	var r: Dictionary = await SellFlow.broker_commit(
+		get_tree(), _client, ledger, str(_quote["op_id"]), _selected["element"])
+	_busy = false
+	_show_outcome(r)
+
+
 func _commit() -> void:
 	if _busy or _quote.is_empty():
 		return
@@ -315,21 +421,30 @@ func _commit() -> void:
 		get_tree(), _client, ledger, str(_quote["op_id"]), _selected["element"])
 	_busy = false
 
+	_show_outcome(r)
+
+
+## Render whatever the flow reported. The outcome is read, never inferred from
+## success: a lapsed window returns HTTP 200 and is NOT a sale.
+func _show_outcome(r: Dictionary) -> void:
 	_clear_panel()
-	# The outcome is read from the flow, never inferred from success. A lapsed
-	# window returns HTTP 200 and is NOT a sale.
 	match str(r.get("outcome", "")):
 		SellFlow.OUTCOME_LISTED:
 			_panel.add_child(MarketTheme.label("LISTED", MarketTheme.FONT_HEAD, MarketTheme.ACCENT))
 			_panel.add_child(_wrapped(
 				"Your item is on the market. Proceeds arrive in the courier "
 				+ "crate when it sells.", MarketTheme.TEXT))
+		SellFlow.OUTCOME_SOLD:
+			_panel.add_child(MarketTheme.label("SOLD", MarketTheme.FONT_HEAD, MarketTheme.ACCENT))
+			_panel.add_child(_wrapped(
+				"The broker paid %s. It arrives as cash in your courier crate."
+				% MarketTheme.money(r.get("paid", 0)), MarketTheme.TEXT))
 		SellFlow.OUTCOME_RETURNED:
-			_panel.add_child(MarketTheme.label("NOT LISTED", MarketTheme.FONT_HEAD, MarketTheme.WARN))
+			_panel.add_child(MarketTheme.label("NOT SOLD", MarketTheme.FONT_HEAD, MarketTheme.WARN))
 			_panel.add_child(_wrapped(str(r.get("message", "")), MarketTheme.WARN))
 			_panel.add_child(_wrapped(
-				"Nothing was sold and the fee was refunded. The item is coming "
-				+ "back to your courier crate.", MarketTheme.TEXT_DIM))
+				"Nothing was sold. The item is coming back to your courier crate.",
+				MarketTheme.TEXT_DIM))
 		SellFlow.OUTCOME_INTERRUPTED:
 			_panel.add_child(MarketTheme.label("UNFINISHED", MarketTheme.FONT_HEAD, MarketTheme.WARN))
 			_panel.add_child(_wrapped(str(r.get("message", "")), MarketTheme.WARN))

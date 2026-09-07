@@ -5,7 +5,7 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.6.0"
+const VERSION := "0.7.0"
 const LOG_PREFIX := "[FleaMarket] "
 
 const Fixtures := preload("res://mods/FleaMarket/Fixtures.gd")

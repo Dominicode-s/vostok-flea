@@ -122,6 +122,19 @@ static func destroy(tree: SceneTree, element: Node) -> bool:
 
 # --- Cash ---
 
+## Whether the physical-money mod is installed at all.
+##
+## Distinct from "you have no cash". Telling a player they need 500 roubles
+## when the mod that implements roubles is missing sends them looking for money
+## instead of for the dependency.
+static func cash_available() -> bool:
+	return cash_mod() != null
+
+
+const CASH_MISSING := ("The Cash System mod is not installed. Trading needs it, "
+	+ "because fees and payments are physical cash. Browsing works without it.")
+
+
 static func cash_on_hand() -> int:
 	var cash := cash_mod()
 	if cash == null or not cash.has_method("CountCash"):

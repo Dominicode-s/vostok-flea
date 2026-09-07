@@ -49,6 +49,7 @@ const LOG_PREFIX := "[FleaMarket/sell] "
 
 ## Outcomes, for the caller to render. Never inferred from an HTTP code.
 const OUTCOME_LISTED := "listed"
+const OUTCOME_SOLD := "sold"            # sold outright to the broker
 const OUTCOME_RETURNED := "returned"
 const OUTCOME_REFUSED := "refused"      # nothing was destroyed
 const OUTCOME_INTERRUPTED := "interrupted"  # destroyed, phase 2 unresolved
@@ -178,7 +179,8 @@ static func commit(tree: SceneTree, client: Node, ledger: RefCounted,
 static func recover(tree: SceneTree, client: Node, ledger: RefCounted) -> Array:
 	var results := []
 	for entry in ledger.outstanding():
-		if str(entry.get("kind", "")) != PendingLedger.KIND_LISTING:
+		var kind := str(entry.get("kind", ""))
+		if kind != PendingLedger.KIND_LISTING and kind != PendingLedger.KIND_BROKER_SELL:
 			continue
 		if ledger.is_stalled(entry):
 			# Retried too often. Kept, never dropped -- an operation that cannot
@@ -198,7 +200,7 @@ static func recover(tree: SceneTree, client: Node, ledger: RefCounted) -> Array:
 				ledger.complete(op_id)
 
 			PendingLedger.LOCAL_COMMITTED:
-				results.append(await _recover_committed(tree, client, ledger, entry))
+				results.append(await _recover_committed(tree, client, ledger, entry, kind))
 
 			PendingLedger.CONFIRMED:
 				# The server has already told us what happened; only local
@@ -210,7 +212,7 @@ static func recover(tree: SceneTree, client: Node, ledger: RefCounted) -> Array:
 # --- Internals ---
 
 static func _recover_committed(tree: SceneTree, client: Node, ledger: RefCounted,
-		entry: Dictionary) -> Dictionary:
+		entry: Dictionary, kind: String = PendingLedger.KIND_LISTING) -> Dictionary:
 	var op_id := str(entry["op_id"])
 	var payload: Dictionary = entry["payload"]
 
@@ -232,6 +234,8 @@ static func _recover_committed(tree: SceneTree, client: Node, ledger: RefCounted
 		ledger.advance(op_id, PendingLedger.LOCAL_COMMITTED, {"destroyed": true})
 
 	_log("replaying confirm for %s" % op_id)
+	if kind == PendingLedger.KIND_BROKER_SELL:
+		return await _broker_confirm(client, ledger, op_id)
 	return await _confirm(client, ledger, op_id)
 
 
@@ -291,3 +295,133 @@ static func _confirm(client: Node, ledger: RefCounted, op_id: String) -> Diction
 
 static func _log(msg: String) -> void:
 	print(LOG_PREFIX + msg)
+
+
+# ---------------------------------------------------------------------------
+# Selling to the broker
+# ---------------------------------------------------------------------------
+#
+# §7.3: the broker always quotes a two-sided price, which is what makes "you can
+# always sell" true on a market too small and too scattered to have a buyer for
+# everything. Selling to it is instant rather than a listing that may sit for 72
+# hours.
+#
+# The endpoint differs from a listing -- no ask price, no listing fee -- but the
+# ordering discipline is identical, and deliberately shares this file's
+# machinery rather than copying it: record, flush, destroy, confirm.
+
+
+## Quote an outright sale to the broker. Escrows nothing and charges no fee.
+static func broker_quote(client: Node, ledger: RefCounted, slot: SlotData) -> Dictionary:
+	var refusal: String = ItemBridge.rejection_reason(slot)
+	if refusal != "":
+		return {"ok": false, "outcome": OUTCOME_REFUSED, "message": refusal}
+
+	var op_id: String = client.new_idempotency_key()
+	var descriptor: Dictionary = ItemBridge.to_descriptor(slot)
+
+	ledger.begin(op_id, PendingLedger.KIND_BROKER_SELL, {"descriptor": descriptor})
+
+	var res: Dictionary = await client.post_json("/broker/sell", {
+		"descriptor": descriptor,
+	}, op_id)
+
+	if not res["ok"]:
+		ledger.complete(op_id)
+		# broker_not_bidding and not_in_basket are ordinary answers, not faults:
+		# the broker declines items outside its basket, below its condition
+		# floor, at its inventory cap, or when its float is dry.
+		return {"ok": false, "outcome": OUTCOME_REFUSED,
+			"message": str(res.get("message", "The broker will not buy this.")),
+			"error": str(res.get("error", ""))}
+
+	var body = res["json"]
+	if not body is Dictionary:
+		ledger.complete(op_id)
+		return {"ok": false, "outcome": OUTCOME_REFUSED,
+			"message": "The market sent a reply this terminal could not read."}
+
+	var confirm_key: String = client.new_idempotency_key()
+	ledger.advance(op_id, PendingLedger.RESERVED, {
+		"broker_sale_id": int(body.get("broker_sale_id", 0)),
+		"quote_price": int(body.get("quote_price", 0)),
+		"confirm_key": confirm_key,
+		"destroyed": false,
+	})
+
+	return {
+		"ok": true,
+		"op_id": op_id,
+		"broker_sale_id": int(body.get("broker_sale_id", 0)),
+		"quote_price": int(body.get("quote_price", 0)),
+		"reserved_until": str(body.get("reserved_until", "")),
+	}
+
+
+## Commit a broker sale: destroy the item, then confirm.
+static func broker_commit(tree: SceneTree, client: Node, ledger: RefCounted,
+		op_id: String, element: Node) -> Dictionary:
+	var entry: Dictionary = ledger.get_entry(op_id)
+	if entry.is_empty():
+		return {"ok": false, "outcome": OUTCOME_REFUSED,
+			"message": "This sale is no longer on record. Nothing was destroyed."}
+
+	# THE ORDERING RULE, exactly as for a listing.
+	if not ledger.advance(op_id, PendingLedger.LOCAL_COMMITTED):
+		return {"ok": false, "outcome": OUTCOME_REFUSED,
+			"message": "Could not record this sale, so nothing was destroyed."}
+
+	if not Stash.destroy(tree, element):
+		return {"ok": false, "outcome": OUTCOME_REFUSED,
+			"message": "Could not take the item from your inventory."}
+
+	ledger.advance(op_id, PendingLedger.LOCAL_COMMITTED, {"destroyed": true})
+	return await _broker_confirm(client, ledger, op_id)
+
+
+## Phase 2 for a broker sale. Cannot refuse: the goods are already gone.
+static func _broker_confirm(client: Node, ledger: RefCounted, op_id: String) -> Dictionary:
+	var entry: Dictionary = ledger.get_entry(op_id)
+	if entry.is_empty():
+		return {"ok": false, "outcome": OUTCOME_INTERRUPTED,
+			"message": "This sale is no longer on record."}
+
+	var payload: Dictionary = entry["payload"]
+	var sale_id := int(payload.get("broker_sale_id", 0))
+	var confirm_key := str(payload.get("confirm_key", ""))
+	if confirm_key == "":
+		confirm_key = client.new_idempotency_key()
+		ledger.advance(op_id, PendingLedger.LOCAL_COMMITTED, {"confirm_key": confirm_key})
+		ledger.note_error(op_id, "confirm key was missing and had to be minted")
+
+	var res: Dictionary = await client.post_json(
+		"/broker/sell/%d/confirm" % sale_id, {}, confirm_key)
+
+	if not res["ok"]:
+		ledger.note_error(op_id, str(res.get("message", res.get("error", "unknown"))))
+		return {"ok": false, "outcome": OUTCOME_INTERRUPTED,
+			"message": ("The market did not answer. Your item is safe -- this "
+				+ "will finish next time the terminal is opened."),
+			"op_id": op_id}
+
+	var body = res["json"]
+	var status := ""
+	if body is Dictionary:
+		status = str(body.get("status", ""))
+
+	ledger.advance(op_id, PendingLedger.CONFIRMED, {"status": status})
+	ledger.complete(op_id)
+
+	# HTTP 200 does NOT mean it was bought. The float can drain between phases.
+	if status == "returned":
+		var note := "The broker could not pay, so nothing was sold."
+		if body is Dictionary and str(body.get("note", "")) != "":
+			note = str(body["note"])
+		return {"ok": true, "outcome": OUTCOME_RETURNED,
+			"message": note,
+			"delivery_id": int(body.get("delivery_id", 0)) if body is Dictionary else 0}
+
+	return {"ok": true, "outcome": OUTCOME_SOLD,
+		"paid": int(body.get("paid", 0)) if body is Dictionary else 0,
+		"message": "Sold to the broker.",
+		"delivery_id": int(body.get("delivery_id", 0)) if body is Dictionary else 0}
