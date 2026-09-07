@@ -16,7 +16,16 @@ extends RefCounted
 ## file, build an ArrayMesh with SurfaceTool, and hand the result to
 ## ResourceSaver so the rest of the engine can load it normally.
 
-const MESH_PATH := "user://FleaMarket_TerminalMesh.res"
+## Generated resources live in a SUBDIRECTORY of user://, not beside it.
+##
+## The game's Loader.FormatSave() deletes every *.tres at the TOP LEVEL of
+## user:// when a save is reset, sparing only Validator.tres and
+## Preferences.tres. It lists the directory non-recursively, so anything one
+## level down survives. Every mod that generates resources is exposed to this:
+## the same sweep takes XP Skills' skillbooks and the physical-money mod's item
+## data too.
+const ASSET_DIR := "user://FleaMarket"
+const MESH_PATH := ASSET_DIR + "/TerminalMesh.res"
 const MODEL_DIR := "res://mods/FleaMarket/model"
 const OBJ_PATH := MODEL_DIR + "/terminal.obj"
 

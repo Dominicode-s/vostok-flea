@@ -21,9 +21,12 @@ const TerminalModel := preload("res://mods/FleaMarket/TerminalModel.gd")
 const ITEM_KEY := "FleaTerminal"
 const DISPLAY_NAME := "Flea Market Terminal"
 
-const ICON_PATH := "user://FleaMarket_TerminalIcon.tres"
-const TETRIS_PATH := "user://FleaMarket_TerminalTetris.tscn"
-const ITEM_PATH := "user://FleaMarket_TerminalItem.tres"
+## See the note in TerminalModel.gd: a save reset deletes every top-level
+## *.tres in user://, so generated resources live one level down.
+const ASSET_DIR := TerminalModel.ASSET_DIR
+const ICON_PATH := ASSET_DIR + "/TerminalIcon.tres"
+const TETRIS_PATH := ASSET_DIR + "/TerminalTetris.tscn"
+const ITEM_PATH := ASSET_DIR + "/TerminalItem.tres"
 const SCENE_PATH := "res://mods/FleaMarket/FleaTerminal_F.tscn"
 
 ## Catalog grid footprint, in inventory cells.
@@ -34,6 +37,8 @@ const ICON_PX := 128
 ## Build every generated asset. Returns true when the ItemData is on disk and
 ## loadable, which is the precondition for the world scene resolving.
 static func build() -> bool:
+	DirAccess.make_dir_recursive_absolute(ASSET_DIR)
+
 	# The world scene references the mesh by its user:// path, so it has to
 	# exist before that scene is ever loaded.
 	var used_model := TerminalModel.build()

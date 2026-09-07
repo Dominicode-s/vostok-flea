@@ -5,7 +5,7 @@ extends Node
 ## Design rule this file exists to protect: the terminal is a RENDERER. No
 ## market logic, no price calculation, no deciding what a trade is worth, ever.
 
-const VERSION := "0.3.0"
+const VERSION := "0.3.1"
 const LOG_PREFIX := "[FleaMarket] "
 
 const TerminalAssets := preload("res://mods/FleaMarket/TerminalAssets.gd")
@@ -30,6 +30,18 @@ var _poll_timer: Timer = null
 var _furniture_registered := false
 var _last_scene_note := ""
 var _ui: Node = null
+var _absent_ticks := 0
+
+## Presence of the terminal in the player's world.
+const PRESENCE_NO := 0
+const PRESENCE_YES := 1
+## Could not tell -- the UI is not up yet. Never treated as absent: a false
+## negative grants a second terminal.
+const PRESENCE_UNKNOWN := -1
+
+## Consecutive one-second polls reporting "absent" before a terminal is
+## granted. The catalog grid fills a beat after the shelter finishes loading.
+const ABSENT_TICKS_BEFORE_GRANT := 4
 
 
 func _ready() -> void:
@@ -109,14 +121,64 @@ func _check_shelter() -> void:
 
 	_log_scene_state(tree)
 
-	if not _furniture_registered or _terminal_granted():
+	if not _furniture_registered:
 		return
 
 	var map := tree.root.get_node_or_null("Map")
 	if map == null or not "mapType" in map or str(map.mapType) != "Shelter":
+		_absent_ticks = 0
 		return
 
-	_grant_terminal(map)
+	match _terminal_presence(map):
+		PRESENCE_YES:
+			_absent_ticks = 0
+			_mark_terminal_granted()
+		PRESENCE_UNKNOWN:
+			# Could not read the catalog grid. Say nothing rather than guess:
+			# a false "absent" grants a duplicate.
+			_absent_ticks = 0
+		PRESENCE_NO:
+			# The catalog grid populates a beat after the shelter loads, so a
+			# single empty read is not evidence of anything. Require several
+			# consecutive absent reads before acting.
+			_absent_ticks += 1
+			if _absent_ticks >= ABSENT_TICKS_BEFORE_GRANT:
+				_absent_ticks = 0
+				_grant_terminal(map)
+
+
+## Does the player actually have a terminal -- placed in the shelter, or
+## waiting in the build catalog?
+##
+## This replaced a persisted "already granted" flag, which had a hole. The flag
+## lived in FleaMarket.cfg, and a .cfg survives the game's save reset while the
+## generated ItemData -- a .tres -- does not (Loader.FormatSave deletes every
+## top-level *.tres). So after starting a new game the mod believed it had
+## granted a terminal that no longer existed anywhere, and would never grant
+## another.
+##
+## Asking the world is strictly better than remembering: it is correct after a
+## save wipe, after a profile switch, and if the player scraps the terminal.
+func _terminal_presence(map: Node) -> int:
+	var placed := map.find_children("FleaTerminal_F*", "", true, false)
+	if not placed.is_empty():
+		return PRESENCE_YES
+
+	var interface := map.get_node_or_null("Core/UI/Interface")
+	if interface == null or not "catalogGrid" in interface:
+		return PRESENCE_UNKNOWN
+	var grid = interface.catalogGrid
+	if grid == null or not is_instance_valid(grid):
+		return PRESENCE_UNKNOWN
+
+	for child in grid.get_children():
+		if not "slotData" in child or child.slotData == null:
+			continue
+		if child.slotData.itemData == null:
+			continue
+		if str(child.slotData.itemData.file) == TerminalAssets.ITEM_KEY:
+			return PRESENCE_YES
+	return PRESENCE_NO
 
 
 ## Put one terminal into the player's build catalog, once ever.
@@ -243,18 +305,15 @@ func save_player_key(key: String) -> void:
 	_log("player key saved")
 
 
-## Whether this player has already been given a terminal.
+## Record that this profile has a terminal.
 ##
-## Keyed per save profile: profiles are separate worlds, and a terminal granted
-## in one is not present in another. Secure Container shipped a fix for exactly
-## this class of bug -- one shared file meant a container opened showing another
-## save's items.
-func _terminal_granted() -> bool:
-	return bool(_config().get_value("granted", _profile_id(), false))
-
-
+## Kept only as a breadcrumb for support ("has this save ever had one?").
+## Nothing branches on it: _terminal_presence asks the world instead, because a
+## remembered flag outlived the thing it described. See that function.
 func _mark_terminal_granted() -> void:
 	var cfg := _config()
+	if bool(cfg.get_value("granted", _profile_id(), false)):
+		return
 	cfg.set_value("granted", _profile_id(), true)
 	cfg.save(CONFIG_PATH)
 
