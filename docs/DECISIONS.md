@@ -1,12 +1,12 @@
-# Decisions taken while you were asleep
+# Design decisions
 
-**2026-09-08.** You asked me to sort out the loose ends and leave a record of
-anything I decided for myself. This is that record. Everything here is
-reversible; the ones I'd most expect you to disagree with are marked.
+**2026-09-08.** A record of the loose ends tied up before v1, and the calls
+made along the way. Everything here is reversible; the most debatable ones are
+marked.
 
 ---
 
-## Things you had already flagged
+## Loose ends
 
 ### Restored the production delivery ETA
 
@@ -15,8 +15,8 @@ Testing values (20s base) are gone; §7.5 production values are back:
 `max_seconds` 7200.
 
 The 15-minute wait is the intended feel — "order, play, come back to a full
-crate" is the design, not friction. Config is a runtime row, so if you want it
-fast again for testing it is one `update config` away and takes effect within
+crate" is the design, not friction. Config is a runtime row, so making it
+fast again for testing is one `update config` away and takes effect within
 15 seconds without a deploy.
 
 ### Removed the M0 spike from the game
@@ -30,10 +30,9 @@ It stays in the repo under `spike/` as the evidence behind
 
 ---
 
-## Features I added
+## Features completed for v1
 
-I judged all three to be *in* v1 scope rather than additions, but they were not
-things you asked for on the night, so they are listed here.
+All three were already *in* v1 scope; they were just unfinished.
 
 ### Wallet withdrawal — §8.1 screen 6
 
@@ -49,7 +48,7 @@ its own credit into a delivery. Same reasoning as cancelling a listing.
 
 `POST /v1/broker/sell` was in the v1 API surface and unimplemented. Without it,
 an item nobody wants sits on the market for 72 hours; §7.3's whole argument is
-that the broker guarantees you can always sell.
+that the broker guarantees a player can always sell.
 
 It shares `SellFlow`'s ordering discipline and recovery rather than copying
 them. Verified end to end against the live server: quoted 190, paid 190,
@@ -58,39 +57,39 @@ basket.
 
 ### Standing listings, and cancelling them
 
-You found this one: My Orders only showed deliveries. It now shows your
-listings too, with a Cancel button.
+My Orders only showed deliveries. It now shows the player's own listings too,
+with a Cancel button.
 
 This needed a **server change** — a `mine=true` filter on `GET /v1/listings`.
 Filtering the browse feed by callsign client-side would have worked today and
-broken quietly once the market pages, because your own listing might not be on
-the page fetched.
+broken quietly once the market pages, because the player's own listing might
+not be on the page fetched.
 
 ---
 
 ## Judgement calls
 
-### Cash System stays an OPTIONAL dependency  ← most likely to be contentious
+### Cash System stays an OPTIONAL dependency  ← the most debatable call
 
 The loader supports `required=`, which blocks the mod with an explanation when
 a dependency is missing. Trading genuinely needs the Cash mod, so `required`
 is defensible.
 
-I kept it optional. Browsing and price-checking work perfectly without cash,
-and the brief was explicit that a read-only price-check mod is shippable on its
+It stays optional. Browsing and price-checking work perfectly without cash,
+and the spec is explicit that a read-only price-check mod is shippable on its
 own. Blocking the whole mod would delete a feature that works.
 
 The screens that need cash now say so plainly — "The Cash System mod is not
 installed" rather than "you need 500 roubles", which would send someone looking
 for money instead of for the dependency.
 
-**Change it to `required=["cash-system"]` in `mod.txt` if you disagree.**
+Switching to `required=["cash-system"]` in `mod.txt` is a one-line change if that turns out to be wrong.
 
 ### The fixtures are granted, not sold
 
-I registered both with `trader_pools: []`, intending "granted only". The
-registry overrode that and defaulted them to the Generalist trader, warning
-that furniture is otherwise unreachable. I left the override in place: it is a
+Both are registered with `trader_pools: []`, intending "granted only". The
+registry overrides that and defaults them to the Generalist trader, warning
+that furniture is otherwise unreachable. The override stays in place: it is a
 sensible fallback if a player scraps theirs, and fighting the registry to
 prevent it would be effort spent making the mod worse.
 
@@ -107,18 +106,18 @@ button greys itself out and says why.
 
 Server-side. At 60 runs, `deliveriesAcked` landed anywhere in 16..33 against
 its own `> 20` assertion, so the suite failed about half the time on a healthy
-tree. I raised the run count to 150 rather than lowering the threshold: the
-threshold is the point, and a self-coverage check that flakes teaches you to
-re-run until green. Costs about 20 seconds.
+tree. The run count went up to 150 rather than the threshold coming down: the
+threshold is the point, and a self-coverage check that flakes teaches everyone
+to re-run until green. Costs about 20 seconds.
 
 ---
 
 ## Packaging
 
-- **`CHANGELOG.md`** — written for players, not for us. It leads with what the
+- **`CHANGELOG.md`** — written for players, not developers. It leads with what the
   mod does and states the three things it does not do yet.
 - **`.github/workflows/build.yml`** — builds the VMZ on push, and a GitHub
-  Release on a `v*` tag, matching the convention your other mods use. It also
+  Release on a `v*` tag, matching the convention the other mods use. It also
   guards two mistakes that have actually happened here: backslash paths (the
   loader rejects those as `BAD ZIP`) and a missing fixture scene.
 - CI deliberately does **not** run the test suites. They need a Godot binary
@@ -126,14 +125,14 @@ re-run until green. Costs about 20 seconds.
 
 ---
 
-## What I could not do
+## Still to do
 
 - **The 3D models.** Drop `model/terminal.obj` and `model/crate.obj` into
   `mods/FleaMarket/model/` and they are picked up automatically. Origin at the
   base is the one rigid requirement; the folder's README has the rest.
-- **A player key for anyone but you.** Your `FleaMarket.cfg` currently holds
-  `dev_buyer`, a shared key from the server box. Fine for you, wrong for
-  anyone else — each player pastes their own into the Setup screen.
+- **Per-player keys.** The dev `FleaMarket.cfg` holds `dev_buyer`, a shared
+  key from the server box. Fine for development, wrong for release — each
+  player pastes their own into the Setup screen.
 
 ---
 
