@@ -3,10 +3,10 @@
 [ext_resource type="Script" path="res://mods/FleaMarket/FleaTerminal.gd" id="1"]
 [ext_resource type="Script" path="res://Scripts/Surface.gd" id="2"]
 [ext_resource type="Script" path="res://Scripts/Furniture.gd" id="3"]
-[ext_resource type="Resource" path="user://FleaMarket_TerminalItem.tres" id="4"]
+[ext_resource type="Resource" path="user://FleaMarket/TerminalItem.tres" id="4"]
 [ext_resource type="Texture2D" path="res://UI/Sprites/Icon_Object.png" id="5"]
 [ext_resource type="Material" path="res://Modular/Materials/MT_Hint.tres" id="6"]
-[ext_resource type="ArrayMesh" path="user://FleaMarket_TerminalMesh.res" id="7"]
+[ext_resource type="ArrayMesh" path="user://FleaMarket/TerminalMesh.res" id="7"]
 
 [sub_resource type="BoxShape3D" id="SH_Terminal"]
 size = Vector3(0.6, 1.2, 0.45)

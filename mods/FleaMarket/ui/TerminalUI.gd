@@ -17,6 +17,7 @@ const DetailScreen := preload("res://mods/FleaMarket/ui/DetailScreen.gd")
 const OrdersScreen := preload("res://mods/FleaMarket/ui/OrdersScreen.gd")
 const WalletScreen := preload("res://mods/FleaMarket/ui/WalletScreen.gd")
 const SetupScreen := preload("res://mods/FleaMarket/ui/SetupScreen.gd")
+const SellScreen := preload("res://mods/FleaMarket/ui/SellScreen.gd")
 
 signal closed
 
@@ -125,6 +126,7 @@ func _build_nav() -> Control:
 	# for them, so a tab would be a promise the server cannot keep.
 	for entry in [
 		{"id": "browse", "label": "Browse"},
+		{"id": "sell", "label": "Sell"},
 		{"id": "orders", "label": "My Orders"},
 		{"id": "wallet", "label": "Wallet"},
 		{"id": "setup", "label": "Setup"},
@@ -170,6 +172,8 @@ func _show(id: String) -> void:
 	match id:
 		"browse":
 			screen = BrowseScreen.new()
+		"sell":
+			screen = SellScreen.new()
 		"orders":
 			screen = OrdersScreen.new()
 		"wallet":

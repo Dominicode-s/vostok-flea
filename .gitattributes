@@ -1,0 +1,14 @@
+# Godot reads these fine either way, but the VMZ should be byte-consistent
+# across machines, and a CRLF round-trip once turned a 60-line server change
+# into a 3,500-line diff. Normalise on checkin, check out as LF.
+* text=auto eol=lf
+
+# Windows-only tooling keeps CRLF so it runs from Explorer as well as a shell.
+*.ps1 text eol=crlf
+
+# Binary-ish payloads git should not touch.
+*.vmz binary
+*.res binary
+*.png binary
+*.jpg binary
+*.obj -text

@@ -89,6 +89,22 @@ func post_json(path: String, body: Dictionary, idempotency_key: String) -> Dicti
 	return await _send("POST", path, JSON.stringify(payload), idempotency_key)
 
 
+## DELETE, and any other verb that carries no body.
+##
+## Cancelling a listing is the only current caller. It is mutating but has no
+## ordering hazard: nothing is destroyed client-side, the server unwinds its own
+## escrow and schedules the item back as an ordinary delivery. So it takes an
+## idempotency key like any mutating call, but needs no PendingLedger entry --
+## there is no window in which a crash could lose anything.
+func request_json(method: String, path: String, idempotency_key: String,
+		query: Dictionary = {}) -> Dictionary:
+	if idempotency_key.strip_edges() == "":
+		push_error("FleaMarket: request_json called without an idempotency key")
+		return _failure("missing_idempotency_key",
+			"Refusing to send a mutating call with no idempotency key.")
+	return await _send(method, path + _build_query(query), "", idempotency_key)
+
+
 ## Fresh RFC-4122 v4 UUID for use as an idempotency key.
 func new_idempotency_key() -> String:
 	var b: PackedByteArray
@@ -114,7 +130,7 @@ func _send(method: String, path: String, body: String, idempotency_key: String) 
 
 	while true:
 		attempt += 1
-		var res := await _send_once(method, path, body)
+		var res := await _send_once(method, path, body, idempotency_key)
 
 		# --- Transport failure: no HTTP response at all ---
 		if not res["transport_ok"]:
@@ -184,7 +200,8 @@ func _send(method: String, path: String, body: String, idempotency_key: String) 
 	return _failure("unknown", "Request loop exited unexpectedly.")
 
 
-func _send_once(method: String, path: String, body: String) -> Dictionary:
+func _send_once(method: String, path: String, body: String,
+		idempotency_key: String = "") -> Dictionary:
 	var tree := get_tree()
 	if tree == null:
 		return {
@@ -194,7 +211,9 @@ func _send_once(method: String, path: String, body: String) -> Dictionary:
 
 	var req := HTTPRequest.new()
 	req.timeout = REQUEST_TIMEOUT
-	req.download_body_size_limit = BODY_LIMIT
+	# Godot 4.6 calls this body_size_limit; download_body_size_limit was the 3.x
+	# name and silently fails to assign, leaving the cap off entirely.
+	req.body_size_limit = BODY_LIMIT
 	add_child(req)
 
 	var headers := [
@@ -205,6 +224,11 @@ func _send_once(method: String, path: String, body: String) -> Dictionary:
 		headers.append("Authorization: Bearer " + player_key)
 	if body != "":
 		headers.append("Content-Type: application/json")
+	# A POST carries the key in its JSON body. DELETE has no body, so the
+	# server accepts it from this header instead -- and requires it either way.
+	# The same value is reused across retries, which is the entire point.
+	if idempotency_key != "" and body == "":
+		headers.append("Idempotency-Key: " + idempotency_key)
 
 	var verb := HTTPClient.METHOD_GET if method == "GET" else HTTPClient.METHOD_POST
 	if method == "DELETE":

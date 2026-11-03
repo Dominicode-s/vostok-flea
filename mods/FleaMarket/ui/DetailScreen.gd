@@ -11,12 +11,16 @@ extends Control
 ## stops being a server config change and starts needing a mod update.
 
 const MarketTheme := preload("res://mods/FleaMarket/ui/MarketTheme.gd")
+const BuyFlow := preload("res://mods/FleaMarket/BuyFlow.gd")
+const Stash := preload("res://mods/FleaMarket/Stash.gd")
+const DeliveryService := preload("res://mods/FleaMarket/DeliveryService.gd")
 
 var listing_id := 0
 
 var _ui: Node = null
 var _client: Node = null
 var _body: VBoxContainer = null
+var _busy := false
 
 
 func setup(ui: Node, client: Node) -> void:
@@ -223,23 +227,125 @@ func _stats_panel(stats: Dictionary) -> Control:
 	return panel
 
 
-## Buying is M4. The control is shown disabled with the reason stated, rather
-## than hidden: §8.3's point is that a greyed control which explains itself is
-## worth a great deal of goodwill, and hiding it would leave the player
-## wondering whether the terminal works at all.
-func _buy_panel(_quote: Dictionary) -> Control:
+## The buy control (§13).
+##
+## Disabled with the reason stated rather than hidden whenever it cannot work,
+## because §8.3's argument is that a greyed control which explains itself buys
+## real goodwill -- and a live-looking button that fails does the opposite.
+func _buy_panel(quote: Dictionary) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+
+	var total := int(quote.get("total", 0))
+	var on_hand := Stash.cash_on_hand()
+	var crate := DeliveryService.find_crate(get_tree())
+
+	var reason := ""
+	if not Stash.cash_available():
+		reason = Stash.CASH_MISSING
+	elif not _ui.is_online():
+		reason = "The market is unreachable, so buying is disabled."
+	elif total <= 0:
+		reason = "This listing has no price."
+	elif on_hand < total:
+		reason = "You are carrying %s. This costs %s -- bring the cash here." % [
+			MarketTheme.money(on_hand), MarketTheme.money(total)]
+	elif crate == null:
+		# Not a hard block on the server's side, but buying with nowhere for the
+		# goods to land is a trap worth refusing up front.
+		reason = "Place a courier crate in your shelter first -- purchases arrive there."
+
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-
-	var buy := MarketTheme.button("Buy", false)
-	buy.custom_minimum_size = Vector2(160, 38)
+	var buy := MarketTheme.button("Buy for " + MarketTheme.money(total), reason == "")
+	buy.custom_minimum_size = Vector2(200, 38)
+	if reason == "":
+		buy.pressed.connect(func(): _confirm_buy(quote))
 	row.add_child(buy)
 
-	var reason := "Buying arrives in a later update. This terminal is read-only for now."
-	if not _ui.is_online():
-		reason = "Buying is disabled while the market is unreachable."
-	row.add_child(MarketTheme.label(reason, MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
-	return row
+	if reason != "":
+		row.add_child(MarketTheme.label(reason, MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
+	else:
+		row.add_child(MarketTheme.label(
+			"You are carrying " + MarketTheme.money(on_hand),
+			MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
+	box.add_child(row)
+	return box
+
+
+## Buying destroys real cash, so it is deliberately two steps and says plainly
+## what is about to happen.
+func _confirm_buy(quote: Dictionary) -> void:
+	for child in _body.get_children():
+		child.queue_free()
+
+	var total := int(quote.get("total", 0))
+	_body.add_child(MarketTheme.label("CONFIRM PURCHASE", MarketTheme.FONT_HEAD, MarketTheme.ACCENT))
+	_body.add_child(_wrapped(
+		"This destroys %s in cash from your inventory and schedules the goods "
+		% MarketTheme.money(total)
+		+ "for your courier crate.", MarketTheme.WARN))
+	if quote.get("eta_seconds") != null:
+		_body.add_child(_wrapped("Arrives in about %s."
+			% MarketTheme.duration(quote["eta_seconds"]), MarketTheme.TEXT_DIM))
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var go := MarketTheme.button("Pay " + MarketTheme.money(total))
+	go.custom_minimum_size = Vector2(180, 38)
+	go.pressed.connect(func(): _do_buy(total))
+	row.add_child(go)
+	var back := MarketTheme.button("Cancel")
+	back.pressed.connect(_load)
+	row.add_child(back)
+	_body.add_child(row)
+
+
+func _do_buy(expected_total: int) -> void:
+	if _busy:
+		return
+	_busy = true
+
+	var main = _ui.main() if _ui.has_method("main") else null
+	var ledger = main.ledger() if main != null and main.has_method("ledger") else null
+	if ledger == null:
+		_busy = false
+		return
+
+	for child in _body.get_children():
+		child.queue_free()
+	_body.add_child(MarketTheme.label("Reserving...", MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
+
+	var r: Dictionary = await BuyFlow.reserve(_client, ledger, listing_id, expected_total)
+	if not r["ok"]:
+		_busy = false
+		_outcome("COULD NOT BUY", MarketTheme.DANGER, str(r.get("message", "")))
+		return
+
+	# Phase 1 took nothing. Phase 2 destroys the cash.
+	var c: Dictionary = await BuyFlow.commit(_client, ledger, str(r["op_id"]))
+	_busy = false
+
+	match str(c.get("outcome", "")):
+		BuyFlow.OUTCOME_BOUGHT:
+			_outcome("BOUGHT", MarketTheme.ACCENT, str(c.get("message", "")))
+		BuyFlow.OUTCOME_CREDITED:
+			# HTTP 200, but the player did NOT get the item.
+			_outcome("NOT BOUGHT", MarketTheme.WARN, str(c.get("message", "")))
+		BuyFlow.OUTCOME_INTERRUPTED:
+			_outcome("UNFINISHED", MarketTheme.WARN, str(c.get("message", "")))
+		_:
+			_outcome("REFUSED", MarketTheme.DANGER, str(c.get("message", "")))
+
+
+func _outcome(title: String, colour: Color, message: String) -> void:
+	for child in _body.get_children():
+		child.queue_free()
+	_body.add_child(MarketTheme.label(title, MarketTheme.FONT_HEAD, colour))
+	_body.add_child(_wrapped(message, MarketTheme.TEXT))
+	var back := MarketTheme.button("Back to browse")
+	back.pressed.connect(func(): _ui.back_to_browse())
+	_body.add_child(back)
 
 
 # --- Building blocks ---
@@ -300,3 +406,10 @@ func _message(text: String) -> void:
 	back.pressed.connect(func(): _ui.back_to_browse())
 	_body.add_child(back)
 	_body.add_child(MarketTheme.label(text, MarketTheme.FONT_BODY, MarketTheme.TEXT_DIM))
+
+
+func _wrapped(text: String, colour: Color) -> Label:
+	var l := MarketTheme.label(text, MarketTheme.FONT_BODY, colour)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(620, 0)
+	return l
